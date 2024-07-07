@@ -5,15 +5,15 @@ class SimCardInfo {
 
   static Future<String?> get simCountryCode async {
     try {
-      final String? countryCode = await _channel.invokeMethod(
+      final countryCode = await _channel.invokeMethod(
         'getSimCountryCode',
       );
       if (countryCode == null) {
         throw Exception('Country Code is null');
       }
-      return countryCode;
+      return countryCode.toString();
     } catch (e) {
-      rethrow;
+      return null;
     }
   }
 }

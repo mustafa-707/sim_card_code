@@ -22,7 +22,7 @@ To use this plugin, add `sim_card_code` as a dependency in your `pubspec.yaml` f
 ### Example
 
 ```dart
-    final simCountryCode = await SimCardInfo.simCountryCode; // Output is "XX" Country code upper letters
+    final phoneContryCode = await SimCardInfo.simCountryCode; // Output is "XX" Country code upper letters
 ```
 
 ## Limitations
