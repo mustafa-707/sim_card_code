@@ -186,7 +186,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.2"
-  sim_card_info:
+  sim_card_code:
     dependency: "direct main"
     description:
       path: ".."

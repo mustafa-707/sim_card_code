@@ -1,15 +1,36 @@
-# sim_card_info
+# Sim Card Info Plugin
 
-A new Flutter plugin project.
+A Flutter plugin for accessing SIM card Country Code.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter
-[plug-in package](https://flutter.dev/developing-packages/),
-a specialized package that includes platform-specific implementation code for
-Android and/or iOS.
+- Retrieve SIM country code.
 
-For help getting started with Flutter development, view the
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Supported Platforms
 
+- iOS (9.0 and above)
+- Android
+
+## iOS 14 and Above
+
+Starting from iOS 14, the `serviceSubscriberCellularProviders` property used to retrieve SIM card information is deprecated. The plugin currently uses this method, so consider alternative approaches for future iOS updates. Always refer to the latest Apple documentation for recommended practices regarding access to SIM card information.
+
+## Usage
+
+To use this plugin, add `sim_card_code` as a dependency in your `pubspec.yaml` file.
+
+### Example
+
+```dart
+    final simCountryCode = await SimCardInfo.simCountryCode; // Output is "XX" Country code upper letters
+```
+
+## Limitations
+
+- Access to SIM card information depends on the availability and permissions granted by the user.
+
+## Support
+
+If you find this plugin helpful, consider supporting me:
+
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/guidelines/download-assets-sm-1.svg)](https://buymeacoffee.com/is10vmust)

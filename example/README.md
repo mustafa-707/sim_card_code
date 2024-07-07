@@ -1,6 +1,6 @@
-# sim_card_info_example
+# sim_card_code_example
 
-Demonstrates how to use the sim_card_info plugin.
+Demonstrates how to use the sim_card_code plugin.
 
 ## Getting Started
 

@@ -1,9 +1,9 @@
 #
 # To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html.
-# Run `pod lib lint sim_card_info.podspec` to validate before publishing.
+# Run `pod lib lint sim_card_code.podspec` to validate before publishing.
 #
 Pod::Spec.new do |s|
-  s.name             = 'sim_card_info'
+  s.name             = 'sim_card_code'
   s.version          = '0.0.1'
   s.summary          = 'A new Flutter plugin project.'
   s.description      = <<-DESC
