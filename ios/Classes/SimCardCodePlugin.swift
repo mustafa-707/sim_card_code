@@ -19,28 +19,35 @@ public class SimCardCodePlugin: NSObject, FlutterPlugin {
   }
 
   private func getSimCountryCode(result: @escaping FlutterResult) {
-    let networkInfo = CTTelephonyNetworkInfo()
-    var carrier: CTCarrier?
-
-    if #available(iOS 12.0, *) {
-      if let carriers = networkInfo.serviceSubscriberCellularProviders {
-        for (_, carrierValue) in carriers {
-          if let isoCountryCode = carrierValue.isoCountryCode {
-            carrier = carrierValue
-            break
+    do {
+      let networkInfo = CTTelephonyNetworkInfo()
+      var countryCode: String? = nil
+      
+      if #available(iOS 12.0, *) {
+        
+        if let carriers = networkInfo.serviceSubscriberCellularProviders {
+          for (_, carrierValue) in carriers {
+            if let isoCountryCode = carrierValue.isoCountryCode, !isoCountryCode.isEmpty {
+              countryCode = isoCountryCode.uppercased()
+              break
+            }
           }
         }
+      } else {
+        
+        if let carrier = networkInfo.subscriberCellularProvider, 
+           let isoCountryCode = carrier.isoCountryCode, 
+           !isoCountryCode.isEmpty {
+          countryCode = isoCountryCode.uppercased()
+        }
       }
-    } else {
-      carrier = networkInfo.subscriberCellularProvider
-    }
-
-    if let carrier = carrier, let countryCode = carrier.isoCountryCode {
+      
       result(countryCode)
-    } else {
-      let flutterError = FlutterError(code: "SIM_COUNTRY_CODE_ERROR", message: "Error getting country", details: nil)
-      result(flutterError)
+    } catch {
+      
+      result(FlutterError(code: "SIM_COUNTRY_CODE_ERROR", 
+                          message: "Error getting country: \(error.localizedDescription)", 
+                          details: nil))
     }
   }
-
 }

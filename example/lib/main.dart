@@ -14,7 +14,6 @@ class ExampleWidget extends StatefulWidget {
 
 class _ExampleWidgetState extends State<ExampleWidget> {
   String _simCountryCode = 'Unknown';
-
   @override
   void initState() {
     super.initState();
@@ -28,9 +27,7 @@ class _ExampleWidgetState extends State<ExampleWidget> {
     } on PlatformException {
       simCountryCode = 'Failed to get sim country code.';
     }
-
     if (!mounted) return;
-
     setState(() {
       _simCountryCode = simCountryCode ?? 'Unknown';
     });
@@ -40,15 +37,11 @@ class _ExampleWidgetState extends State<ExampleWidget> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Sim Card Code Plugin Example'),
-        ),
+        appBar: AppBar(title: const Text('Sim Card Code Plugin Example')),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text('Sim Country Code: $_simCountryCode\n'),
-            ],
+            children: <Widget>[Text('Sim Country Code: $_simCountryCode\n')],
           ),
         ),
       ),

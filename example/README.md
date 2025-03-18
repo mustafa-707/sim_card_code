@@ -1,6 +1,6 @@
-# sim_card_code_example
+# example
 
-Demonstrates how to use the sim_card_code plugin.
+A new Flutter project.
 
 ## Getting Started
 

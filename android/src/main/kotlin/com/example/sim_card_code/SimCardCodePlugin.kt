@@ -28,15 +28,19 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
   }
 
   private fun getSimCountryCode(result: Result) {
-    val manager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
-    manager?.let {
-      val countryId = it.simCountryIso
-      if (countryId != null) {
-        result.success(countryId.toUpperCase())
-        return
+    try {
+      val manager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
+      manager?.let {
+        val countryId = it.simCountryIso
+        if (countryId != null && countryId.isNotEmpty()) {
+          result.success(countryId.uppercase())
+          return
+        }
       }
+      result.success(null)
+    } catch (e: Exception) {
+      result.error("SIM_COUNTRY_CODE_ERROR", e.message, null)
     }
-    result.error("SIM_COUNTRY_CODE_ERROR", null, null)
   }
 
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {

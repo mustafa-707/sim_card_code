@@ -1,4 +1,4 @@
-library sim_card_code;
+library;
 
 import 'dart:async';
 import 'package:flutter/services.dart';
