@@ -1,6 +1,6 @@
 # CHANGES
 
-## 0.0.4
+## 1.0.3
 
 - Update README.md
 - Add more information from sim card
