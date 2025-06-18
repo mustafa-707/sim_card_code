@@ -1,4 +1,4 @@
-package com.example.sim_card_code
+package com.example.sim_card_info
 
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
