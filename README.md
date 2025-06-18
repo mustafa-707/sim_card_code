@@ -1,7 +1,7 @@
 # Sim Card Info Plugin
 
 [![StandWithPalestine](https://raw.githubusercontent.com/TheBSD/StandWithPalestine/main/badges/StandWithPalestine.svg)](https://github.com/TheBSD/StandWithPalestine/blob/main/docs/README.md)
-[![Pub Version](https://img.shields.io/pub/v/sim_card_info.svg)](https://pub.dev/packages/sim_card_info)
+[![Pub Version](https://img.shields.io/pub/v/sim_card_code.svg)](https://pub.dev/packages/sim_card_code)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 A comprehensive Flutter plugin that provides extensive access to SIM card and network information across iOS and Android platforms. Get detailed information about SIM cards, network operators, device identifiers, and dual SIM support.
@@ -37,11 +37,11 @@ A comprehensive Flutter plugin that provides extensive access to SIM card and ne
 
 ## 🔧 Installation
 
-Add `sim_card_info` to your `pubspec.yaml`:
+Add `sim_card_code` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  sim_card_info: ^latest_version
+  sim_card_code: ^latest_version
 ```
 
 Then run:
@@ -80,7 +80,7 @@ No additional setup required for iOS 9.0 - 13.x.
 Import the package:
 
 ```dart
-import 'package:sim_card_info/sim_card_info.dart';
+import 'package:sim_card_code/sim_card_code.dart';
 ```
 
 ### Basic SIM Information

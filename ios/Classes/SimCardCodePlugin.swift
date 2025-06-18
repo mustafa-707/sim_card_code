@@ -2,10 +2,10 @@ import Flutter
 import UIKit
 import CoreTelephony
 
-public class SimCardInfoPlugin: NSObject, FlutterPlugin {
+public class SimCardCodePlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
-    let channel = FlutterMethodChannel(name: "sim_card_info", binaryMessenger: registrar.messenger())
-    let instance = SimCardInfoPlugin()
+    let channel = FlutterMethodChannel(name: "sim_card_code", binaryMessenger: registrar.messenger())
+    let instance = SimCardCodePlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)
   }
   

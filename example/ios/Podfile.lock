@@ -1,21 +1,21 @@
 PODS:
   - Flutter (1.0.0)
-  - sim_card_info (0.0.1):
+  - sim_card_code (0.0.1):
     - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - sim_card_info (from `.symlinks/plugins/sim_card_info/ios`)
+  - sim_card_code (from `.symlinks/plugins/sim_card_code/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  sim_card_info:
-    :path: ".symlinks/plugins/sim_card_info/ios"
+  sim_card_code:
+    :path: ".symlinks/plugins/sim_card_code/ios"
 
 SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  sim_card_info: 584c22978671c404245c58e7431f6894453f9761
+  sim_card_code: 584c22978671c404245c58e7431f6894453f9761
 
 PODFILE CHECKSUM: 4305caec6b40dde0ae97be1573c53de1882a07e5
 

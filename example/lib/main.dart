@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sim_card_info/sim_card_info.dart';
+import 'package:sim_card_code/sim_card_code.dart';
 
 void main() {
   runApp(const SimCardManagerApp());

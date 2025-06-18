@@ -1,4 +1,4 @@
-part of '../sim_card_info.dart';
+part of '../sim_card_code.dart';
 
 /// Represents SIM card information
 class SimCardInfo {
@@ -141,7 +141,7 @@ extension SimStateExtension on SimState {
 
 /// Main class for SIM card operations
 class SimCardManager {
-  static const MethodChannel _channel = MethodChannel('sim_card_info');
+  static const MethodChannel _channel = MethodChannel('sim_card_code');
 
   /// Get SIM country code (ISO 3166-1 alpha-2)
   static Future<String?> get simCountryCode async {

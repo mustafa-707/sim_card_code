@@ -1,4 +1,4 @@
-package com.example.sim_card_info
+package com.example.sim_card_code
 
 import android.Manifest
 import android.content.Context
@@ -15,13 +15,13 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 
-/** SimCardInfoPlugin */
-class SimCardInfoPlugin: FlutterPlugin, MethodCallHandler {
+/** SimCardCodePlugin */
+class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
   private lateinit var channel : MethodChannel
   private lateinit var context: Context
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "sim_card_info")
+    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "sim_card_code")
     channel.setMethodCallHandler(this)
     context = flutterPluginBinding.applicationContext
   }
