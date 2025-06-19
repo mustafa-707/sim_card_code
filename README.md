@@ -88,15 +88,14 @@ import 'package:sim_card_code/sim_card_code.dart';
 ```dart
 // Get SIM country code
 try {
-  final countryCode = await SimCardInfo.simCountryCode;
-  print('SIM Country Code: $countryCode'); // Output: "US", "GB", etc.
+  final countryCode = await SimCardManager.simCountryCode;
 } catch (e) {
   print('Error: $e');
 }
 
 // Get SIM operator name
 try {
-  final operatorName = await SimCardInfo.simOperatorName;
+  final operatorName = await SimCardManager.simOperatorName;
   print('SIM Operator: $operatorName'); // Output: "Verizon", "Vodafone", etc.
 } catch (e) {
   print('Error: $e');
@@ -104,7 +103,7 @@ try {
 
 // Get SIM operator code
 try {
-  final operatorCode = await SimCardInfo.simOperatorCode;
+  final operatorCode = await SimCardManager.simOperatorCode;
   print('Operator Code: $operatorCode'); // Output: "310260", etc.
 } catch (e) {
   print('Error: $e');
@@ -116,7 +115,7 @@ try {
 ```dart
 // Check if SIM card is present
 try {
-  final hasSimCard = await SimCardInfo.hasSimCard;
+  final hasSimCard = await SimCardManager.hasSimCard;
   print('Has SIM Card: $hasSimCard');
 } catch (e) {
   print('Error: $e');
@@ -124,7 +123,7 @@ try {
 
 // Get SIM state
 try {
-  final simState = await SimCardInfo.simState;
+  final simState = await SimCardManager.simState;
   print('SIM State: $simState'); // READY, ABSENT, PIN_REQUIRED, etc.
 } catch (e) {
   print('Error: $e');
@@ -136,7 +135,7 @@ try {
 ```dart
 // Get network operator name
 try {
-  final networkOperator = await SimCardInfo.networkOperatorName;
+  final networkOperator = await SimCardManager.networkOperatorName;
   print('Network Operator: $networkOperator');
 } catch (e) {
   print('Error: $e');
@@ -144,7 +143,7 @@ try {
 
 // Get network country code
 try {
-  final networkCountryCode = await SimCardInfo.networkCountryCode;
+  final networkCountryCode = await SimCardManager.networkCountryCode;
   print('Network Country Code: $networkCountryCode');
 } catch (e) {
   print('Error: $e');
@@ -152,7 +151,7 @@ try {
 
 // Get network type
 try {
-  final networkType = await SimCardInfo.networkType;
+  final networkType = await SimCardManager.networkType;
   print('Network Type: $networkType'); // LTE, HSPA, EDGE, etc.
 } catch (e) {
   print('Error: $e');
@@ -160,7 +159,7 @@ try {
 
 // Check roaming status
 try {
-  final isRoaming = await SimCardInfo.isRoaming;
+  final isRoaming = await SimCardManager.isRoaming;
   print('Is Roaming: $isRoaming');
 } catch (e) {
   print('Error: $e');
@@ -172,7 +171,7 @@ try {
 ```dart
 // Check if device supports dual SIM
 try {
-  final isDualSim = await SimCardInfo.isDualSim;
+  final isDualSim = await SimCardManager.isDualSim;
   print('Is Dual SIM: $isDualSim');
 } catch (e) {
   print('Error: $e');
@@ -180,7 +179,7 @@ try {
 
 // Get SIM count
 try {
-  final simCount = await SimCardInfo.simCount;
+  final simCount = await SimCardManager.simCount;
   print('SIM Count: $simCount');
 } catch (e) {
   print('Error: $e');
@@ -188,7 +187,7 @@ try {
 
 // Get all SIM information
 try {
-  final allSimInfo = await SimCardInfo.getAllSimInfo;
+  final allSimInfo = await SimCardManager.getAllSimInfo;
   for (var simInfo in allSimInfo) {
     print('Slot Index: ${simInfo['slotIndex']}');
     print('Subscription ID: ${simInfo['subscriptionId']}');
@@ -209,7 +208,7 @@ try {
 ```dart
 // Get SIM serial number (ICCID)
 try {
-  final serialNumber = await SimCardInfo.simSerialNumber;
+  final serialNumber = await SimCardManager.simSerialNumber;
   print('SIM Serial Number: $serialNumber');
 } catch (e) {
   print('Error: $e');
@@ -217,7 +216,7 @@ try {
 
 // Get phone number
 try {
-  final phoneNumber = await SimCardInfo.phoneNumber;
+  final phoneNumber = await SimCardManager.phoneNumber;
   print('Phone Number: $phoneNumber');
 } catch (e) {
   print('Error: $e');
@@ -225,7 +224,7 @@ try {
 
 // Get device ID (IMEI/MEID)
 try {
-  final deviceId = await SimCardInfo.deviceId;
+  final deviceId = await SimCardManager.deviceId;
   print('Device ID: $deviceId');
 } catch (e) {
   print('Error: $e');

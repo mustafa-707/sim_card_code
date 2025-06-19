@@ -1,5 +1,10 @@
 # CHANGES
 
+## 0.0.5
+
+- Update README.md
+- Solve Keep calling native issue
+
 ## 0.0.4
 
 - Update README.md

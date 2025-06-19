@@ -139,219 +139,121 @@ extension SimStateExtension on SimState {
   }
 }
 
-/// Main class for SIM card operations
 class SimCardManager {
   static const MethodChannel _channel = MethodChannel('sim_card_code');
 
-  /// Get SIM country code (ISO 3166-1 alpha-2)
-  static Future<String?> get simCountryCode async {
+  static Future<T?> _invoke<T>(String method) async {
     try {
-      final countryCode = await _channel.invokeMethod('getSimCountryCode');
-      log('SIM country code: $countryCode');
-      return countryCode as String?;
-    } catch (e) {
+      final result = await _channel.invokeMethod(method);
+      return result as T?;
+    } catch (_) {
       return null;
     }
   }
 
-  /// Get SIM operator name (carrier name)
-  static Future<String?> get simOperatorName async {
-    try {
-      final operatorName = await _channel.invokeMethod('getSimOperatorName');
-      return operatorName as String?;
-    } catch (e) {
-      return null;
-    }
-  }
+  // Caches
+  static String? _simCountryCode;
+  static String? _simOperatorName;
+  static String? _simOperatorCode;
+  static String? _simSerialNumber;
+  static String? _phoneNumber;
+  static SimState? _simState;
+  static String? _networkOperatorName;
+  static String? _networkCountryCode;
+  static String? _networkType;
+  static bool? _isRoaming;
+  static bool? _hasSimCard;
+  static int? _simCount;
+  static bool? _isDualSim;
+  static String? _deviceId;
+  static List<SimCardInfo>? _allSimInfo;
 
-  /// Get SIM operator code (MCC+MNC)
-  static Future<String?> get simOperatorCode async {
-    try {
-      final operatorCode = await _channel.invokeMethod('getSimOperatorCode');
-      return operatorCode as String?;
-    } catch (e) {
-      return null;
-    }
-  }
+  static Future<String?> get simCountryCode async =>
+      _simCountryCode ??= await _invoke<String>('getSimCountryCode');
 
-  /// Get SIM serial number (ICCID)
-  /// Requires READ_PHONE_STATE permission
-  static Future<String?> get simSerialNumber async {
-    try {
-      final serialNumber = await _channel.invokeMethod('getSimSerialNumber');
-      return serialNumber as String?;
-    } catch (e) {
-      return null;
-    }
-  }
+  static Future<String?> get simOperatorName async =>
+      _simOperatorName ??= await _invoke<String>('getSimOperatorName');
 
-  /// Get current SIM state
+  static Future<String?> get simOperatorCode async =>
+      _simOperatorCode ??= await _invoke<String>('getSimOperatorCode');
+
+  static Future<String?> get simSerialNumber async =>
+      _simSerialNumber ??= await _invoke<String>('getSimSerialNumber');
+
+  static Future<String?> get phoneNumber async =>
+      _phoneNumber ??= await _invoke<String>('getPhoneNumber');
+
   static Future<SimState> get simState async {
-    try {
-      final state = await _channel.invokeMethod('getSimState');
-      return SimStateExtension.fromString(state as String);
-    } catch (e) {
-      return SimState.unknown;
-    }
+    if (_simState != null) return _simState!;
+    final result = await _invoke<String>('getSimState');
+    return _simState = SimStateExtension.fromString(result ?? '');
   }
 
-  /// Get phone number associated with SIM
-  /// Requires READ_PHONE_STATE permission
-  /// Note: May return null or empty on many devices
-  static Future<String?> get phoneNumber async {
-    try {
-      final phoneNumber = await _channel.invokeMethod('getPhoneNumber');
-      return phoneNumber as String?;
-    } catch (e) {
-      return null;
-    }
-  }
+  static Future<String?> get networkOperatorName async =>
+      _networkOperatorName ??= await _invoke<String>('getNetworkOperatorName');
 
-  /// Get network operator name
-  static Future<String?> get networkOperatorName async {
-    try {
-      final operatorName =
-          await _channel.invokeMethod('getNetworkOperatorName');
-      return operatorName as String?;
-    } catch (e) {
-      return null;
-    }
-  }
+  static Future<String?> get networkCountryCode async =>
+      _networkCountryCode ??= await _invoke<String>('getNetworkCountryCode');
 
-  /// Get network country code
-  static Future<String?> get networkCountryCode async {
-    try {
-      final countryCode = await _channel.invokeMethod('getNetworkCountryCode');
-      return countryCode as String?;
-    } catch (e) {
-      return null;
-    }
-  }
+  static Future<String?> get networkType async =>
+      _networkType ??= await _invoke<String>('getNetworkType');
 
-  /// Get current network type (2G, 3G, 4G, etc.)
-  static Future<String?> get networkType async {
-    try {
-      final networkType = await _channel.invokeMethod('getNetworkType');
-      return networkType as String?;
-    } catch (e) {
-      return null;
-    }
-  }
+  static Future<bool> get isRoaming async =>
+      _isRoaming ??= await _invoke<bool>('isRoaming') ?? false;
 
-  /// Check if device is roaming
-  static Future<bool> get isRoaming async {
-    try {
-      final roaming = await _channel.invokeMethod('isRoaming');
-      return roaming as bool? ?? false;
-    } catch (e) {
-      return false;
-    }
-  }
+  static Future<bool> get hasSimCard async =>
+      _hasSimCard ??= await _invoke<bool>('hasSimCard') ?? false;
 
-  /// Check if device has SIM card
-  static Future<bool> get hasSimCard async {
-    try {
-      final hasSim = await _channel.invokeMethod('hasSimCard');
-      return hasSim as bool? ?? false;
-    } catch (e) {
-      return false;
-    }
-  }
+  static Future<int> get simCount async =>
+      _simCount ??= await _invoke<int>('getSimCount') ?? 1;
 
-  /// Get number of SIM cards in device
-  static Future<int> get simCount async {
-    try {
-      final count = await _channel.invokeMethod('getSimCount');
-      return count as int? ?? 1;
-    } catch (e) {
-      return 1;
-    }
-  }
+  static Future<bool> get isDualSim async =>
+      _isDualSim ??= await _invoke<bool>('isDualSim') ?? false;
 
-  /// Check if device supports dual SIM
-  static Future<bool> get isDualSim async {
-    try {
-      final isDual = await _channel.invokeMethod('isDualSim');
-      return isDual as bool? ?? false;
-    } catch (e) {
-      return false;
-    }
-  }
+  static Future<String?> get deviceId async =>
+      _deviceId ??= await _invoke<String>('getDeviceId');
 
-  /// Get device ID (IMEI/MEID)
-  /// Requires READ_PHONE_STATE permission
-  static Future<String?> get deviceId async {
-    try {
-      final deviceId = await _channel.invokeMethod('getDeviceId');
-      return deviceId as String?;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /// Get information for all SIM cards (dual SIM support)
-  /// Requires READ_PHONE_STATE permission
   static Future<List<SimCardInfo>> get allSimInfo async {
-    try {
-      final result = await _channel.invokeMethod('getAllSimInfo');
-      if (result == null) return [];
-
-      final List<dynamic> simList = result as List<dynamic>;
-      return simList
-          .map((sim) => SimCardInfo.fromMap(Map<String, dynamic>.from(sim)))
-          .toList();
-    } catch (e) {
-      return [];
-    }
+    if (_allSimInfo != null) return _allSimInfo!;
+    final result = await _invoke<List<dynamic>>('getAllSimInfo');
+    _allSimInfo = result == null
+        ? []
+        : result
+            .map((sim) => SimCardInfo.fromMap(Map<String, dynamic>.from(sim)))
+            .toList();
+    return _allSimInfo!;
   }
 
-  /// Get comprehensive network information
   static Future<NetworkInfo> get networkInfo async {
-    try {
-      final operatorName = await networkOperatorName;
-      final countryCode = await networkCountryCode;
-      final netType = await networkType;
-      final roaming = await isRoaming;
+    final operatorName = await networkOperatorName;
+    final countryCode = await networkCountryCode;
+    final netType = await networkType;
+    final roaming = await isRoaming;
 
-      return NetworkInfo(
-        operatorName: operatorName,
-        countryCode: countryCode,
-        networkType: netType,
-        isRoaming: roaming,
-      );
-    } catch (e) {
-      return const NetworkInfo();
-    }
+    return NetworkInfo(
+      operatorName: operatorName,
+      countryCode: countryCode,
+      networkType: netType,
+      isRoaming: roaming,
+    );
   }
 
-  /// Get basic SIM information (for single SIM devices)
   static Future<SimCardInfo?> get basicSimInfo async {
-    try {
-      final countryCode = await simCountryCode;
-      final operatorName = await simOperatorName;
-      final operatorCode = await simOperatorCode;
-      final phoneNumber = await SimCardManager.phoneNumber;
-      final state = await simState;
-      final roaming = await isRoaming;
+    final countryCode = await simCountryCode;
+    final operatorName = await simOperatorName;
 
-      if (countryCode == null && operatorName == null) {
-        return null; // No SIM detected
-      }
+    if (countryCode == null && operatorName == null) return null;
 
-      return SimCardInfo(
-        countryCode: countryCode,
-        operatorName: operatorName,
-        operatorCode: operatorCode,
-        phoneNumber: phoneNumber,
-        simState: state,
-        isRoaming: roaming,
-      );
-    } catch (e) {
-      return null;
-    }
+    return SimCardInfo(
+      countryCode: countryCode,
+      operatorName: operatorName,
+      operatorCode: await simOperatorCode,
+      phoneNumber: await phoneNumber,
+      simState: await simState,
+      isRoaming: await isRoaming,
+    );
   }
 
-  /// Convenience method - equivalent to simCountryCode for backward compatibility
   @Deprecated('Use simCountryCode instead')
   static Future<String?> getSimCountryCode() => simCountryCode;
 }
