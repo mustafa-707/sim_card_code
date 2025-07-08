@@ -1,5 +1,10 @@
 # CHANGES
 
+## 0.0.6
+
+- Update README.md
+- Solve type issues
+
 ## 0.0.5
 
 - Update README.md

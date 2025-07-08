@@ -39,7 +39,9 @@ class SimCardInfo {
       subscriptionId: map['subscriptionId'] as int?,
       displayName: map['displayName'] as String?,
       carrierName: map['carrierName'] as String?,
-      isRoaming: map['isNetworkRoaming'] as bool?,
+      isRoaming: map['isNetworkRoaming'] is int
+          ? (map['isNetworkRoaming'] as int) == 1
+          : map['isNetworkRoaming'] as bool?,
     );
   }
 

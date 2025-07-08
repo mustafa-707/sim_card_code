@@ -239,11 +239,11 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
       }
 
       val simInfoList = mutableListOf<Map<String, Any?>>()
-      
+
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
         val subscriptionManager = context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager?
         val subscriptionInfoList = subscriptionManager?.activeSubscriptionInfoList
-        
+
         subscriptionInfoList?.forEach { subscriptionInfo ->
           val simInfo = mapOf(
             "slotIndex" to subscriptionInfo.simSlotIndex,
@@ -252,12 +252,14 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
             "carrierName" to subscriptionInfo.carrierName?.toString(),
             "countryIso" to subscriptionInfo.countryIso?.uppercase(),
             "isNetworkRoaming" to subscriptionInfo.dataRoaming,
-            "phoneNumber" to subscriptionInfo.number
+            "phoneNumber" to subscriptionInfo.number,
+            "operatorCode" to null,
+            "serialNumber" to null
           )
           simInfoList.add(simInfo)
         }
       }
-      
+
       result.success(simInfoList)
     } catch (e: Exception) {
       result.error("ALL_SIM_INFO_ERROR", e.message, null)
