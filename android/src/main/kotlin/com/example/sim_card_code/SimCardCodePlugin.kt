@@ -243,8 +243,51 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
         val subscriptionManager = context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager?
         val subscriptionInfoList = subscriptionManager?.activeSubscriptionInfoList
+        val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
 
         subscriptionInfoList?.forEach { subscriptionInfo ->
+          // Get individual TelephonyManager for each subscription
+          val subTelephonyManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            telephonyManager?.createForSubscriptionId(subscriptionInfo.subscriptionId)
+          } else {
+            telephonyManager
+          }
+
+          // Get operator code using TelephonyManager
+          val operatorCode = subTelephonyManager?.simOperator
+          
+          // Get SIM serial number
+          val serialNumber = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+              subTelephonyManager?.simSerialNumber
+            } catch (e: Exception) {
+              null
+            }
+          } else {
+            null
+          }
+
+          // Get SIM state
+          val simState = when (subTelephonyManager?.simState) {
+            TelephonyManager.SIM_STATE_ABSENT -> "ABSENT"
+            TelephonyManager.SIM_STATE_PIN_REQUIRED -> "PIN_REQUIRED"
+            TelephonyManager.SIM_STATE_PUK_REQUIRED -> "PUK_REQUIRED"
+            TelephonyManager.SIM_STATE_NETWORK_LOCKED -> "NETWORK_LOCKED"
+            TelephonyManager.SIM_STATE_READY -> "READY"
+            TelephonyManager.SIM_STATE_NOT_READY -> "NOT_READY"
+            TelephonyManager.SIM_STATE_PERM_DISABLED -> "PERM_DISABLED"
+            TelephonyManager.SIM_STATE_CARD_IO_ERROR -> "CARD_IO_ERROR"
+            TelephonyManager.SIM_STATE_CARD_RESTRICTED -> "CARD_RESTRICTED"
+            else -> "UNKNOWN"
+          }
+
+          // Get phone number - this might be empty for many carriers
+          val phoneNumber = try {
+            subTelephonyManager?.line1Number?.takeIf { it.isNotEmpty() }
+          } catch (e: Exception) {
+            null
+          }
+
           val simInfo = mapOf(
             "slotIndex" to subscriptionInfo.simSlotIndex,
             "subscriptionId" to subscriptionInfo.subscriptionId,
@@ -252,12 +295,43 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
             "carrierName" to subscriptionInfo.carrierName?.toString(),
             "countryIso" to subscriptionInfo.countryIso?.uppercase(),
             "isNetworkRoaming" to subscriptionInfo.dataRoaming,
-            "phoneNumber" to subscriptionInfo.number,
-            "operatorCode" to null,
-            "serialNumber" to null
+            "phoneNumber" to phoneNumber,
+            "operatorCode" to operatorCode,
+            "serialNumber" to serialNumber,
+            "simState" to simState
           )
           simInfoList.add(simInfo)
         }
+      } else {
+        // Fallback for older Android versions
+        val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
+        
+        val simState = when (telephonyManager?.simState) {
+          TelephonyManager.SIM_STATE_ABSENT -> "ABSENT"
+          TelephonyManager.SIM_STATE_PIN_REQUIRED -> "PIN_REQUIRED"
+          TelephonyManager.SIM_STATE_PUK_REQUIRED -> "PUK_REQUIRED"
+          TelephonyManager.SIM_STATE_NETWORK_LOCKED -> "NETWORK_LOCKED"
+          TelephonyManager.SIM_STATE_READY -> "READY"
+          TelephonyManager.SIM_STATE_NOT_READY -> "NOT_READY"
+          TelephonyManager.SIM_STATE_PERM_DISABLED -> "PERM_DISABLED"
+          TelephonyManager.SIM_STATE_CARD_IO_ERROR -> "CARD_IO_ERROR"
+          TelephonyManager.SIM_STATE_CARD_RESTRICTED -> "CARD_RESTRICTED"
+          else -> "UNKNOWN"
+        }
+
+        val simInfo = mapOf(
+          "slotIndex" to 0,
+          "subscriptionId" to 0,
+          "displayName" to telephonyManager?.simOperatorName,
+          "carrierName" to telephonyManager?.simOperatorName,
+          "countryIso" to telephonyManager?.simCountryIso?.uppercase(),
+          "isNetworkRoaming" to (telephonyManager?.isNetworkRoaming ?: false),
+          "phoneNumber" to telephonyManager?.line1Number,
+          "operatorCode" to telephonyManager?.simOperator,
+          "serialNumber" to null,
+          "simState" to simState
+        )
+        simInfoList.add(simInfo)
       }
 
       result.success(simInfoList)

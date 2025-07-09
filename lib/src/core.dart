@@ -35,6 +35,10 @@ class SimCardInfo {
       operatorCode: map['operatorCode'] as String?,
       serialNumber: map['serialNumber'] as String?,
       phoneNumber: map['phoneNumber'] as String?,
+      // Fix: Add SimState parsing
+      simState: map['simState'] != null
+          ? SimStateExtension.fromString(map['simState'] as String)
+          : null,
       slotIndex: map['slotIndex'] as int?,
       subscriptionId: map['subscriptionId'] as int?,
       displayName: map['displayName'] as String?,
@@ -254,6 +258,25 @@ class SimCardManager {
       simState: await simState,
       isRoaming: await isRoaming,
     );
+  }
+
+  // Add method to clear cache for fresh data
+  static void clearCache() {
+    _simCountryCode = null;
+    _simOperatorName = null;
+    _simOperatorCode = null;
+    _simSerialNumber = null;
+    _phoneNumber = null;
+    _simState = null;
+    _networkOperatorName = null;
+    _networkCountryCode = null;
+    _networkType = null;
+    _isRoaming = null;
+    _hasSimCard = null;
+    _simCount = null;
+    _isDualSim = null;
+    _deviceId = null;
+    _allSimInfo = null;
   }
 
   @Deprecated('Use simCountryCode instead')

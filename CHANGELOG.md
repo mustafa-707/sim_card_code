@@ -1,5 +1,12 @@
 # CHANGES
 
+## 0.0.7
+
+- Update README.md
+- Solve type issues on iOS
+- Return Locale.current.identifier if not found in iOS
+- handle android phone number by permission (must to use permission handler)
+
 ## 0.0.6
 
 - Update README.md

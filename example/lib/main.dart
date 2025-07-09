@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:sim_card_code/sim_card_code.dart';
 
 void main() {
@@ -47,14 +50,22 @@ class _SimCardDashboardState extends State<SimCardDashboard>
   @override
   void initState() {
     super.initState();
+    SimCardManager.clearCache();
     _tabController = TabController(length: 3, vsync: this);
     _loadAllInformation();
+    requestPermissions();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> requestPermissions() async {
+    if (await Permission.phone.isDenied) {
+      if (Platform.isAndroid) await Permission.phone.request();
+    }
   }
 
   Future<void> _loadAllInformation() async {

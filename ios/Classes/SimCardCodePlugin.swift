@@ -8,7 +8,7 @@ public class SimCardCodePlugin: NSObject, FlutterPlugin {
     let instance = SimCardCodePlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)
   }
-  
+
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     switch call.method {
     case "getSimCountryCode":
@@ -45,37 +45,63 @@ public class SimCardCodePlugin: NSObject, FlutterPlugin {
       result(FlutterMethodNotImplemented)
     }
   }
-  
-  private func getSimCountryCode(result: @escaping FlutterResult) {
-    do {
-      let networkInfo = CTTelephonyNetworkInfo()
-      var countryCode: String? = nil
-      
-      if #available(iOS 12.0, *) {
-        if let carriers = networkInfo.serviceSubscriberCellularProviders {
-          for (_, carrierValue) in carriers {
-            if let isoCountryCode = carrierValue.isoCountryCode, !isoCountryCode.isEmpty {
-              countryCode = isoCountryCode.uppercased()
-              break
-            }
-          }
-        }
-      } else {
-        if let carrier = networkInfo.subscriberCellularProvider,
-           let isoCountryCode = carrier.isoCountryCode,
-           !isoCountryCode.isEmpty {
-          countryCode = isoCountryCode.uppercased()
-        }
-      }
-      
-      result(countryCode)
-    } catch {
-      result(FlutterError(code: "SIM_COUNTRY_CODE_ERROR",
-                         message: "Error getting country: \(error.localizedDescription)",
-                         details: nil))
+
+  // Helper method to get fallback country code from locale
+  private func getFallbackCountryCode() -> String? {
+    // Try iOS 16+ method first
+    if #available(iOS 16.0, *) {
+      return Locale.current.region?.identifier
     }
+    
+    // Fallback for older iOS versions
+    if let regionCode = Locale.current.regionCode {
+      return regionCode
+    }
+    
+    // Last resort: extract from locale identifier
+    let localeIdentifier = Locale.current.identifier
+    let components = localeIdentifier.components(separatedBy: "_")
+    if components.count > 1 {
+      return components[1]
+    }
+    
+    return nil
   }
-  
+
+  private func getSimCountryCode(result: @escaping FlutterResult) {
+    let networkInfo = CTTelephonyNetworkInfo()
+    var countryCode: String? = nil
+
+    // A set of known invalid placeholder values
+    let invalidCountryCodes = ["--", ""]
+
+    // First try to get country code from SIM card data
+    if #available(iOS 12.0, *) {
+      // Use compactMap to find the first valid country code
+      countryCode = networkInfo.serviceSubscriberCellularProviders?.values.compactMap { carrier in
+        guard let isoCountryCode = carrier.isoCountryCode, !invalidCountryCodes.contains(isoCountryCode) else {
+          return nil
+        }
+        return isoCountryCode.uppercased()
+      }.first
+    } else {
+      // Fallback for older iOS versions with the same check
+      if let carrier = networkInfo.subscriberCellularProvider,
+         let isoCountryCode = carrier.isoCountryCode,
+         !invalidCountryCodes.contains(isoCountryCode) {
+        countryCode = isoCountryCode.uppercased()
+      }
+    }
+
+    // If no valid country code from SIM, fall back to Locale for all iOS versions
+    if countryCode == nil {
+      countryCode = getFallbackCountryCode()
+    }
+
+    // Return the found country code or nil if none was found
+    result(countryCode)
+  }
+
   private func getSimOperatorName(result: @escaping FlutterResult) {
     do {
       let networkInfo = CTTelephonyNetworkInfo()
@@ -193,7 +219,7 @@ public class SimCardCodePlugin: NSObject, FlutterPlugin {
   }
   
   private func getNetworkCountryCode(result: @escaping FlutterResult) {
-    // Same as getSimCountryCode on iOS
+    // Same as getSimCountryCode on iOS - will use locale fallback
     getSimCountryCode(result: result)
   }
   
@@ -330,16 +356,26 @@ public class SimCardCodePlugin: NSObject, FlutterPlugin {
       let networkInfo = CTTelephonyNetworkInfo()
       var simInfoList: [[String: Any?]] = []
       
+      // A set of known invalid placeholder values
+      let invalidCountryCodes = ["--", ""]
+      
       if #available(iOS 12.0, *) {
         if let carriers = networkInfo.serviceSubscriberCellularProviders {
           var slotIndex = 0
           for (key, carrier) in carriers {
+            var countryIso = carrier.isoCountryCode?.uppercased()
+            
+            // Use locale fallback if country code is invalid or nil
+            if countryIso == nil || invalidCountryCodes.contains(countryIso!) {
+              countryIso = getFallbackCountryCode()
+            }
+            
             let simInfo: [String: Any?] = [
               "slotIndex": slotIndex,
-              "subscriptionId": key,
+              "subscriptionId": slotIndex,
               "displayName": carrier.carrierName,
               "carrierName": carrier.carrierName,
-              "countryIso": carrier.isoCountryCode?.uppercased(),
+              "countryIso": countryIso,
               "isNetworkRoaming": nil, // Not available on iOS
               "phoneNumber": nil // Not available on iOS
             ]
@@ -349,12 +385,19 @@ public class SimCardCodePlugin: NSObject, FlutterPlugin {
         }
       } else {
         if let carrier = networkInfo.subscriberCellularProvider {
+          var countryIso = carrier.isoCountryCode?.uppercased()
+          
+          // Use locale fallback if country code is invalid or nil
+          if countryIso == nil || invalidCountryCodes.contains(countryIso!) {
+            countryIso = getFallbackCountryCode()
+          }
+          
           let simInfo: [String: Any?] = [
             "slotIndex": 0,
-            "subscriptionId": "primary",
+            "subscriptionId": 0,
             "displayName": carrier.carrierName,
             "carrierName": carrier.carrierName,
-            "countryIso": carrier.isoCountryCode?.uppercased(),
+            "countryIso": countryIso,
             "isNetworkRoaming": nil, // Not available on iOS
             "phoneNumber": nil // Not available on iOS
           ]

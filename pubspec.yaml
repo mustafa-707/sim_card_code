@@ -1,6 +1,6 @@
 name: sim_card_code
 description: "A Flutter plugin for accessing SIM card and getting Phone number Country Code."
-version: 0.0.6
+version: 0.0.7
 
 repository: https://github.com/mustafa-707/sim_card_code
 issue_tracker: https://github.com/mustafa-707/sim_card_code/issues

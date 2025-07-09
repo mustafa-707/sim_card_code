@@ -89,8 +89,9 @@ import 'package:sim_card_code/sim_card_code.dart';
 // Get SIM country code
 try {
   final countryCode = await SimCardManager.simCountryCode;
+  print('SIM Country Code: $countryCode'); // Output: "US", "UK", "IN"
 } catch (e) {
-  print('Error: $e');
+  print('Error getting country code: $e');
 }
 
 // Get SIM operator name
@@ -98,7 +99,7 @@ try {
   final operatorName = await SimCardManager.simOperatorName;
   print('SIM Operator: $operatorName'); // Output: "Verizon", "Vodafone", etc.
 } catch (e) {
-  print('Error: $e');
+  print('Error getting operator name: $e');
 }
 
 // Get SIM operator code
@@ -106,7 +107,7 @@ try {
   final operatorCode = await SimCardManager.simOperatorCode;
   print('Operator Code: $operatorCode'); // Output: "310260", etc.
 } catch (e) {
-  print('Error: $e');
+  print('Error getting operator code: $e');
 }
 ```
 
@@ -118,7 +119,7 @@ try {
   final hasSimCard = await SimCardManager.hasSimCard;
   print('Has SIM Card: $hasSimCard');
 } catch (e) {
-  print('Error: $e');
+  print('Error checking SIM presence: $e');
 }
 
 // Get SIM state
@@ -126,7 +127,7 @@ try {
   final simState = await SimCardManager.simState;
   print('SIM State: $simState'); // READY, ABSENT, PIN_REQUIRED, etc.
 } catch (e) {
-  print('Error: $e');
+  print('Error getting SIM state: $e');
 }
 ```
 
@@ -138,7 +139,7 @@ try {
   final networkOperator = await SimCardManager.networkOperatorName;
   print('Network Operator: $networkOperator');
 } catch (e) {
-  print('Error: $e');
+  print('Error getting network operator: $e');
 }
 
 // Get network country code
@@ -146,7 +147,7 @@ try {
   final networkCountryCode = await SimCardManager.networkCountryCode;
   print('Network Country Code: $networkCountryCode');
 } catch (e) {
-  print('Error: $e');
+  print('Error getting network country code: $e');
 }
 
 // Get network type
@@ -154,7 +155,7 @@ try {
   final networkType = await SimCardManager.networkType;
   print('Network Type: $networkType'); // LTE, HSPA, EDGE, etc.
 } catch (e) {
-  print('Error: $e');
+  print('Error getting network type: $e');
 }
 
 // Check roaming status
@@ -162,7 +163,7 @@ try {
   final isRoaming = await SimCardManager.isRoaming;
   print('Is Roaming: $isRoaming');
 } catch (e) {
-  print('Error: $e');
+  print('Error checking roaming status: $e');
 }
 ```
 
@@ -174,7 +175,7 @@ try {
   final isDualSim = await SimCardManager.isDualSim;
   print('Is Dual SIM: $isDualSim');
 } catch (e) {
-  print('Error: $e');
+  print('Error checking dual SIM support: $e');
 }
 
 // Get SIM count
@@ -182,7 +183,7 @@ try {
   final simCount = await SimCardManager.simCount;
   print('SIM Count: $simCount');
 } catch (e) {
-  print('Error: $e');
+  print('Error getting SIM count: $e');
 }
 
 // Get all SIM information
@@ -199,7 +200,7 @@ try {
     print('---');
   }
 } catch (e) {
-  print('Error: $e');
+  print('Error getting all SIM info: $e');
 }
 ```
 
@@ -211,7 +212,7 @@ try {
   final serialNumber = await SimCardManager.simSerialNumber;
   print('SIM Serial Number: $serialNumber');
 } catch (e) {
-  print('Error: $e');
+  print('Error getting SIM serial number: $e');
 }
 
 // Get phone number
@@ -219,7 +220,7 @@ try {
   final phoneNumber = await SimCardManager.phoneNumber;
   print('Phone Number: $phoneNumber');
 } catch (e) {
-  print('Error: $e');
+  print('Error getting phone number: $e');
 }
 
 // Get device ID (IMEI/MEID)
@@ -227,7 +228,7 @@ try {
   final deviceId = await SimCardManager.deviceId;
   print('Device ID: $deviceId');
 } catch (e) {
-  print('Error: $e');
+  print('Error getting device ID: $e');
 }
 ```
 
@@ -235,39 +236,43 @@ try {
 
 The plugin returns the following SIM states:
 
-- `READY`: SIM card is ready for use
-- `ABSENT`: No SIM card detected
-- `PIN_REQUIRED`: SIM card requires PIN entry
-- `PUK_REQUIRED`: SIM card requires PUK entry
-- `NETWORK_LOCKED`: SIM card is network locked
-- `NOT_READY`: SIM card is not ready
-- `PERM_DISABLED`: SIM card is permanently disabled
-- `CARD_IO_ERROR`: SIM card I/O error
-- `CARD_RESTRICTED`: SIM card is restricted
-- `UNKNOWN`: Unknown SIM state
+| State             | Description                      |
+| ----------------- | -------------------------------- |
+| `READY`           | SIM card is ready for use        |
+| `ABSENT`          | No SIM card detected             |
+| `PIN_REQUIRED`    | SIM card requires PIN entry      |
+| `PUK_REQUIRED`    | SIM card requires PUK entry      |
+| `NETWORK_LOCKED`  | SIM card is network locked       |
+| `NOT_READY`       | SIM card is not ready            |
+| `PERM_DISABLED`   | SIM card is permanently disabled |
+| `CARD_IO_ERROR`   | SIM card I/O error               |
+| `CARD_RESTRICTED` | SIM card is restricted           |
+| `UNKNOWN`         | Unknown SIM state                |
 
 ## 🌐 Network Types
 
 The plugin identifies the following network types:
 
-- `LTE`: 4G LTE network
-- `HSPA`: High Speed Packet Access
-- `HSDPA`: High Speed Downlink Packet Access
-- `HSUPA`: High Speed Uplink Packet Access
-- `HSPAP`: Evolved High Speed Packet Access
-- `UMTS`: Universal Mobile Telecommunications System
-- `EDGE`: Enhanced Data rates for GSM Evolution
-- `GPRS`: General Packet Radio Service
-- `CDMA`: Code Division Multiple Access
-- `EVDO_0`: Evolution-Data Optimized Rev 0
-- `EVDO_A`: Evolution-Data Optimized Rev A
-- `1xRTT`: Single Carrier Radio Transmission Technology
-- `EHRPD`: Evolved High Rate Packet Data
-- `UNKNOWN`: Unknown network type
+| Type      | Description                                  |
+| --------- | -------------------------------------------- |
+| `LTE`     | 4G LTE network                               |
+| `HSPA`    | High Speed Packet Access                     |
+| `HSDPA`   | High Speed Downlink Packet Access            |
+| `HSUPA`   | High Speed Uplink Packet Access              |
+| `HSPAP`   | Evolved High Speed Packet Access             |
+| `UMTS`    | Universal Mobile Telecommunications System   |
+| `EDGE`    | Enhanced Data rates for GSM Evolution        |
+| `GPRS`    | General Packet Radio Service                 |
+| `CDMA`    | Code Division Multiple Access                |
+| `EVDO_0`  | Evolution-Data Optimized Rev 0               |
+| `EVDO_A`  | Evolution-Data Optimized Rev A               |
+| `1xRTT`   | Single Carrier Radio Transmission Technology |
+| `EHRPD`   | Evolved High Rate Packet Data                |
+| `UNKNOWN` | Unknown network type                         |
 
 ## ⚠️ Error Handling
 
-The plugin returns `null` in the following cases:
+The plugin may return `null` in the following cases:
 
 - No SIM card is detected
 - The device doesn't support the requested functionality
@@ -276,19 +281,28 @@ The plugin returns `null` in the following cases:
 
 All methods may throw exceptions with specific error codes:
 
-- `PERMISSION_DENIED`: Required permissions not granted
-- `SIM_*_ERROR`: Specific SIM-related errors
-- `NETWORK_*_ERROR`: Network-related errors
+| Error Code          | Description                      |
+| ------------------- | -------------------------------- |
+| `PERMISSION_DENIED` | Required permissions not granted |
+| `SIM_*_ERROR`       | Specific SIM-related errors      |
+| `NETWORK_*_ERROR`   | Network-related errors           |
+
+Always wrap your calls in try-catch blocks to handle exceptions gracefully.
 
 ## 🔒 Privacy Considerations
 
-This plugin accesses sensitive device and SIM information. Some methods require the `READ_PHONE_STATE` permission and may return personally identifiable information such as:
+**⚠️ Important**: This plugin accesses sensitive device and SIM information. Some methods require the `READ_PHONE_STATE` permission and may return personally identifiable information such as:
 
 - Phone numbers
 - Device IMEI/MEID
 - SIM serial numbers
 
-Ensure you comply with your app store's privacy policies and inform users about data collection.
+**Compliance Requirements**:
+
+- Ensure you comply with your app store's privacy policies
+- Inform users about data collection in your privacy policy
+- Only collect necessary information for your app's functionality
+- Follow GDPR, CCPA, and other applicable data protection regulations
 
 ## 💖 Support
 
@@ -296,14 +310,10 @@ If you find this plugin helpful, consider supporting the development:
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/guidelines/download-assets-sm-1.svg)](https://buymeacoffee.com/is10vmust)
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
 ## 📞 Contact
 
-For bugs or feature requests, please create an issue on the GitHub repository.
+For bugs or feature requests, please create an issue on the [GitHub repository](https://github.com/mustafa-707/sim_card_code).
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
