@@ -1,5 +1,9 @@
 # CHANGES
 
+## 0.0.8
+
+- Fixes on Android ~ getAllSimInfo
+
 ## 0.0.7
 
 - Update README.md
