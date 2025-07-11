@@ -64,11 +64,16 @@ class _SimCardDashboardState extends State<SimCardDashboard>
 
   Future<void> requestPermissions() async {
     if (await Permission.phone.isDenied) {
-      if (Platform.isAndroid) await Permission.phone.request();
+      if (Platform.isAndroid) {
+        await Permission.phone.request();
+        await Permission.sms.request();
+      }
     }
   }
 
   Future<void> _loadAllInformation() async {
+    requestPermissions();
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;

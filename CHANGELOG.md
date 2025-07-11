@@ -1,5 +1,9 @@
 # CHANGES
 
+## 0.0.9
+
+- Handle phone number for android 13+
+
 ## 0.0.8
 
 - Fixes on Android ~ getAllSimInfo

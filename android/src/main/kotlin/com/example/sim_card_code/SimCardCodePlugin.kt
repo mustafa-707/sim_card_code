@@ -132,7 +132,24 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
       }
       
       val manager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
-      val phoneNumber = manager?.line1Number
+      val phoneNumber = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        // API 33+: Use SubscriptionManager.getPhoneNumber()
+        try {
+          val subscriptionManager = context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager?
+          val subscriptionId = SubscriptionManager.getDefaultSubscriptionId()
+          subscriptionManager?.getPhoneNumber(subscriptionId)?.takeIf { it.isNotEmpty() }
+        } catch (e: Exception) {
+          null
+        }
+      } else {
+        // Below API 33: Use deprecated method
+        try {
+          manager?.line1Number?.takeIf { it.isNotEmpty() }
+        } catch (e: Exception) {
+          null
+        }
+      }
+
       result.success(if (phoneNumber.isNullOrEmpty()) null else phoneNumber)
     } catch (e: Exception) {
       result.error("PHONE_NUMBER_ERROR", e.message, null)
@@ -230,6 +247,7 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
       result.error("DUAL_SIM_ERROR", e.message, null)
     }
   }
+
   private fun getAllSimInfo(result: Result) {
     try {
       if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
@@ -245,17 +263,17 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
         val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
 
         subscriptionInfoList?.forEach { subscriptionInfo ->
-          
+          // Get individual TelephonyManager for each subscription
           val subTelephonyManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             telephonyManager?.createForSubscriptionId(subscriptionInfo.subscriptionId)
           } else {
             telephonyManager
           }
 
-          
+          // Get operator code using TelephonyManager
           val operatorCode = subTelephonyManager?.simOperator
           
-          
+          // Get SIM serial number
           val serialNumber = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
               subTelephonyManager?.simSerialNumber
@@ -266,7 +284,7 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
             null
           }
 
-          
+          // Get SIM state
           val simState = when (subTelephonyManager?.simState) {
             TelephonyManager.SIM_STATE_ABSENT -> "ABSENT"
             TelephonyManager.SIM_STATE_PIN_REQUIRED -> "PIN_REQUIRED"
@@ -280,33 +298,19 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
             else -> "UNKNOWN"
           }
 
-
-          val phoneNumber = try {
-            when {
-
-              Build.VERSION.SDK_INT >= Build.VERSION_CODES.N -> {
-                subTelephonyManager?.line1Number?.takeIf { it.isNotEmpty() }
-              }
-
-              Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 -> {
-
-                val phoneNumberFromSub = subscriptionInfo.number?.takeIf { it.isNotEmpty() }
-                phoneNumberFromSub ?: subTelephonyManager?.line1Number?.takeIf { it.isNotEmpty() }
-              }
-              else -> {
-                subTelephonyManager?.line1Number?.takeIf { it.isNotEmpty() }
-              }
-            }
-          } catch (e: Exception) {
-
+          // Get phone number - this might be empty for many carriers
+          val phoneNumber = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // API 33+: Use SubscriptionManager.getPhoneNumber()
             try {
-
-              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                subscriptionManager?.getPhoneNumber(subscriptionInfo.subscriptionId)?.takeIf { it.isNotEmpty() }
-              } else {
-                null
-              }
-            } catch (e2: Exception) {
+              subscriptionManager?.getPhoneNumber(subscriptionInfo.subscriptionId)?.takeIf { it.isNotEmpty() }
+            } catch (e: Exception) {
+              null
+            }
+          } else {
+            // Below API 33: Use deprecated method
+            try {
+              subTelephonyManager?.line1Number?.takeIf { it.isNotEmpty() }
+            } catch (e: Exception) {
               null
             }
           }
@@ -326,9 +330,9 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
           simInfoList.add(simInfo)
         }
       } else {
-
+        // Fallback for older Android versions
         val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
-
+        
         val simState = when (telephonyManager?.simState) {
           TelephonyManager.SIM_STATE_ABSENT -> "ABSENT"
           TelephonyManager.SIM_STATE_PIN_REQUIRED -> "PIN_REQUIRED"
@@ -349,7 +353,21 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
           "carrierName" to telephonyManager?.simOperatorName,
           "countryIso" to telephonyManager?.simCountryIso?.uppercase(),
           "isNetworkRoaming" to (telephonyManager?.isNetworkRoaming ?: false),
-          "phoneNumber" to telephonyManager?.line1Number,
+          "phoneNumber" to if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            try {
+              val subscriptionManager = context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager?
+              val subscriptionId = SubscriptionManager.getDefaultSubscriptionId()
+              subscriptionManager?.getPhoneNumber(subscriptionId)?.takeIf { it.isNotEmpty() }
+            } catch (e: Exception) {
+              null
+            }
+          } else {
+            try {
+              telephonyManager?.line1Number?.takeIf { it.isNotEmpty() }
+            } catch (e: Exception) {
+              null
+            }
+          },
           "operatorCode" to telephonyManager?.simOperator,
           "serialNumber" to null,
           "simState" to simState
