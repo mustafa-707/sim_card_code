@@ -334,6 +334,11 @@ class _SimCardDashboardState extends State<SimCardDashboard>
 
       if (simInfo.isEsim != null)
         _buildInfoRow('eSIM', simInfo.isEsim! ? 'Yes' : 'No'),
+      if (simInfo.isEsim == null && Platform.isIOS)
+        _buildInfoRow(
+          'eSIM',
+          'Check the iPhone Settings > Cellular / Mobile Data > SIMs',
+        ),
     ];
   }
 
