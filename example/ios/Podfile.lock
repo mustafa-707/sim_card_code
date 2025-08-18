@@ -2,16 +2,13 @@ PODS:
   - Flutter (1.0.0)
   - permission_handler_apple (9.3.0):
     - Flutter
-  - sim_card_code (0.0.6):
-    - Flutter
-  - sim_country_code_plus (0.1.0):
+  - sim_card_code (0.0.7):
     - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - sim_card_code (from `.symlinks/plugins/sim_card_code/ios`)
-  - sim_country_code_plus (from `.symlinks/plugins/sim_country_code_plus/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
@@ -20,14 +17,11 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
   sim_card_code:
     :path: ".symlinks/plugins/sim_card_code/ios"
-  sim_country_code_plus:
-    :path: ".symlinks/plugins/sim_country_code_plus/ios"
 
 SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
-  sim_card_code: 5e7589a6123adf5705a5145110d53534bc557d3e
-  sim_country_code_plus: e571e071250c66622a45903b165c29aae0b77056
+  permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
+  sim_card_code: 4940a5c7c331caafbf86f0cf00b49f905a4698ed
 
 PODFILE CHECKSUM: 4305caec6b40dde0ae97be1573c53de1882a07e5
 

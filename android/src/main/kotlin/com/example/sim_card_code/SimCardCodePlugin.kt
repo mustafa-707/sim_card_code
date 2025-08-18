@@ -42,6 +42,7 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
       "getSimCount" -> getSimCount(result)
       "getAllSimInfo" -> getAllSimInfo(result)
       "isDualSim" -> isDualSim(result)
+      "isEsim" -> isEsim(result)
       "getDeviceId" -> getDeviceId(result)
       else -> result.notImplemented()
     }
@@ -248,6 +249,47 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
     }
   }
 
+  /*
+  * To make it equivalent to telephony manager which points to the default SIM used for voice calls
+  * we use subscription ID of default voice call SIM
+  * because the telephony manager also points the default SIM for voice calls to check is Network Roaming
+  */
+  private fun isEsim(result : Result){
+
+    // First check if the permission is given or not
+    if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+      result.error("PERMISSION_DENIED", "READ_PHONE_STATE permission required", null)
+      return
+    }
+
+    // check the build version we are using 28 because e-sim was added in Android 9 (Api 28)
+    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P){
+      try {
+        val subscriptionManager = context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager?
+        val defaultSubId = SubscriptionManager.getDefaultVoiceSubscriptionId()
+
+        // if no sim simply return false
+        if(defaultSubId == SubscriptionManager.INVALID_SUBSCRIPTION_ID){
+         return result.success(true)
+        }
+
+        val subscriptionInfo =  subscriptionManager?.getActiveSubscriptionInfo(defaultSubId)
+
+        // call result callback with flag value for e-sim
+       result.success( subscriptionInfo?.isEmbedded ?: false)
+
+      }catch (e:SecurityException){
+        result.error("Permission Denied",e.message?:"Unknow Error",null)
+      }
+      catch (e:Exception){
+        result.error("ESIM_ERROR",e.message,null)
+      }
+    }else{
+      result.success(false)
+    }
+  }
+
+
   private fun getAllSimInfo(result: Result) {
     try {
       if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
@@ -263,6 +305,13 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
         val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
 
         subscriptionInfoList?.forEach { subscriptionInfo ->
+          // Get whether the sim is e-sim or not
+          val isEmbedded = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P){
+            subscriptionInfo.isEmbedded
+          }else{
+            false
+          }
+
           // Get individual TelephonyManager for each subscription
           val subTelephonyManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             telephonyManager?.createForSubscriptionId(subscriptionInfo.subscriptionId)
@@ -316,6 +365,7 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
           }
 
           val simInfo = mapOf(
+            "isEsim" to isEmbedded,
             "slotIndex" to subscriptionInfo.simSlotIndex,
             "subscriptionId" to subscriptionInfo.subscriptionId,
             "displayName" to subscriptionInfo.displayName?.toString(),
@@ -347,6 +397,7 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
         }
 
         val simInfo = mapOf(
+          "isEsim" to false, // older version dont have e-sim feature
           "slotIndex" to 0,
           "subscriptionId" to 0,
           "displayName" to telephonyManager?.simOperatorName,

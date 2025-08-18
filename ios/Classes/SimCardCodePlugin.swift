@@ -41,6 +41,8 @@ public class SimCardCodePlugin: NSObject, FlutterPlugin {
       isDualSim(result: result)
     case "getDeviceId":
       getDeviceId(result: result)
+    case "isEsim":
+        isEsim(result: result)
     default:
       result(FlutterMethodNotImplemented)
     }
@@ -377,7 +379,8 @@ public class SimCardCodePlugin: NSObject, FlutterPlugin {
               "carrierName": carrier.carrierName,
               "countryIso": countryIso,
               "isNetworkRoaming": nil, // Not available on iOS
-              "phoneNumber": nil // Not available on iOS
+              "phoneNumber": nil, // Not available on iOS
+              "isEsim": nil,// Not available on iOS
             ]
             simInfoList.append(simInfo)
             slotIndex += 1
@@ -399,7 +402,8 @@ public class SimCardCodePlugin: NSObject, FlutterPlugin {
             "carrierName": carrier.carrierName,
             "countryIso": countryIso,
             "isNetworkRoaming": nil, // Not available on iOS
-            "phoneNumber": nil // Not available on iOS
+            "phoneNumber": nil, // Not available on iOS
+            "isEsim": nil,// Not available on iOS
           ]
           simInfoList.append(simInfo)
         }
@@ -419,4 +423,10 @@ public class SimCardCodePlugin: NSObject, FlutterPlugin {
                        message: "Device ID is not available on iOS for privacy reasons",
                        details: nil))
   }
+    
+ private func isEsim(result: @escaping FlutterResult) {
+        result(FlutterError(
+            code: "NOT_AVAILABLE_ON_IOS", message: "Api to distinguish a sim(physical/esim) is not provided.", details: nil
+        ))
+    }
 }

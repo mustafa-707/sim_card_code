@@ -13,6 +13,7 @@ class SimCardInfo {
   final String? displayName;
   final String? carrierName;
   final bool? isRoaming;
+  final bool? isEsim;
 
   const SimCardInfo({
     this.countryCode,
@@ -26,6 +27,7 @@ class SimCardInfo {
     this.displayName,
     this.carrierName,
     this.isRoaming,
+    this.isEsim,
   });
 
   factory SimCardInfo.fromMap(Map<String, dynamic> map) {
@@ -43,6 +45,7 @@ class SimCardInfo {
       subscriptionId: map['subscriptionId'] as int?,
       displayName: map['displayName'] as String?,
       carrierName: map['carrierName'] as String?,
+      isEsim: map['isEsim'] as bool?,
       isRoaming: map['isNetworkRoaming'] is int
           ? (map['isNetworkRoaming'] as int) == 1
           : map['isNetworkRoaming'] as bool?,
@@ -62,6 +65,7 @@ class SimCardInfo {
       'displayName': displayName,
       'carrierName': carrierName,
       'isRoaming': isRoaming,
+      'isEsim': isEsim,
     };
   }
 
@@ -69,7 +73,7 @@ class SimCardInfo {
   String toString() {
     return 'SimCardInfo(countryCode: $countryCode, operatorName: $operatorName, '
         'operatorCode: $operatorCode, phoneNumber: $phoneNumber, '
-        'simState: $simState, slotIndex: $slotIndex)';
+        'simState: $simState, slotIndex: $slotIndex, isEsim : $isEsim)';
   }
 }
 
@@ -171,6 +175,7 @@ class SimCardManager {
   static bool? _hasSimCard;
   static int? _simCount;
   static bool? _isDualSim;
+  static bool? _isEsim;
   static String? _deviceId;
   static List<SimCardInfo>? _allSimInfo;
 
@@ -216,6 +221,9 @@ class SimCardManager {
   static Future<bool> get isDualSim async =>
       _isDualSim ??= await _invoke<bool>('isDualSim') ?? false;
 
+  static Future<bool> get isEsim async =>
+      _isEsim ??= await _invoke<bool>('isEsim') ?? false;
+
   static Future<String?> get deviceId async =>
       _deviceId ??= await _invoke<String>('getDeviceId');
 
@@ -257,6 +265,7 @@ class SimCardManager {
       phoneNumber: await phoneNumber,
       simState: await simState,
       isRoaming: await isRoaming,
+      isEsim: await isEsim,
     );
   }
 
@@ -274,6 +283,7 @@ class SimCardManager {
     _isRoaming = null;
     _hasSimCard = null;
     _simCount = null;
+    _isEsim = null;
     _isDualSim = null;
     _deviceId = null;
     _allSimInfo = null;
