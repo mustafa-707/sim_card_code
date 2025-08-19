@@ -42,6 +42,7 @@ class _SimCardDashboardState extends State<SimCardDashboard>
   bool _hasSimCard = false;
   bool _isDualSim = false;
   int _simCount = 0;
+  bool _supportsEsim = false;
 
   // UI State
   bool _isLoading = true;
@@ -89,6 +90,7 @@ class _SimCardDashboardState extends State<SimCardDashboard>
         SimCardManager.hasSimCard,
         SimCardManager.isDualSim,
         SimCardManager.simCount,
+        SimCardManager.supportsEsim,
       ]);
 
       if (mounted) {
@@ -100,6 +102,7 @@ class _SimCardDashboardState extends State<SimCardDashboard>
           _hasSimCard = results[4] as bool;
           _isDualSim = results[5] as bool;
           _simCount = results[6] as int;
+          _supportsEsim = results[7] as bool;
           _isLoading = false;
         });
       }
@@ -505,6 +508,7 @@ class _SimCardDashboardState extends State<SimCardDashboard>
                   _buildInfoRow('SIM Slots', _simCount.toString()),
                   _buildInfoRow('Dual SIM Support', _isDualSim ? 'Yes' : 'No'),
                   _buildInfoRow('SIM Card Present', _hasSimCard ? 'Yes' : 'No'),
+                  _buildInfoRow('eSIM Support', _supportsEsim ? 'Yes' : 'No'),
                 ],
               ),
             ),

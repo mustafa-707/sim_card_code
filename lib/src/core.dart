@@ -178,6 +178,7 @@ class SimCardManager {
   static bool? _isEsim;
   static String? _deviceId;
   static List<SimCardInfo>? _allSimInfo;
+  static bool? _supportsEsim;
 
   static Future<String?> get simCountryCode async =>
       _simCountryCode ??= await _invoke<String>('getSimCountryCode');
@@ -221,8 +222,16 @@ class SimCardManager {
   static Future<bool> get isDualSim async =>
       _isDualSim ??= await _invoke<bool>('isDualSim') ?? false;
 
+  /// Method to tell whether the default SIM is and ESIM or not
+  ///
   static Future<bool> get isEsim async =>
       _isEsim ??= await _invoke<bool>('isEsim') ?? false;
+
+  /// Method to check if the device supports eSIM functionality
+  /// based on hardware capabilities.
+  ///
+  static Future<bool> get supportsEsim async =>
+      _supportsEsim ??= await _invoke<bool>('supportsEsim') ?? false;
 
   static Future<String?> get deviceId async =>
       _deviceId ??= await _invoke<String>('getDeviceId');
