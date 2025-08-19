@@ -330,10 +330,10 @@ class _SimCardDashboardState extends State<SimCardDashboard>
       _buildInfoRow('Phone Number', simInfo.phoneNumber ?? 'N/A'),
       _buildInfoRow('SIM State', simInfo.simState?.name ?? 'Unknown'),
       if (simInfo.isRoaming != null)
-        _buildInfoRow('Roaming', simInfo.isRoaming! ? 'Yes' : 'No'),
+        _buildInfoRow('Roaming', (simInfo.isRoaming ?? false) ? 'Yes' : 'No'),
 
       if (simInfo.isEsim != null)
-        _buildInfoRow('eSIM', simInfo.isEsim! ? 'Yes' : 'No'),
+        _buildInfoRow('eSIM', (simInfo.isEsim ?? false) ? 'Yes' : 'No'),
       if (simInfo.isEsim == null && Platform.isIOS)
         _buildInfoRow(
           'eSIM',

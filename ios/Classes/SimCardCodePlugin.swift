@@ -424,9 +424,48 @@ public class SimCardCodePlugin: NSObject, FlutterPlugin {
                        details: nil))
   }
     
- private func isEsim(result: @escaping FlutterResult) {
-        result(FlutterError(
-            code: "NOT_AVAILABLE_ON_IOS", message: "Api to distinguish a sim(physical/esim) is not provided.", details: nil
-        ))
+private func isEsim(result: @escaping FlutterResult) {
+    if #available(iOS 12.0, *) {
+        let networkInfo = CTTelephonyNetworkInfo()
+        
+        // Check how many SIM slots are reported
+        if let carriers = networkInfo.serviceSubscriberCellularProviders {
+            // If there are multiple entries, one may be an eSIM
+            if carriers.count > 1 {
+                result(true)
+                return
+            }
+            
+            // If there’s at least one carrier but with no name,
+            // it could be an unused eSIM slot
+            for carrier in carriers.values {
+                if carrier.carrierName == nil {
+                    result(true)
+                    return
+                }
+            }
+        }
     }
+    
+    // Fallback: detect device model (XS or newer support eSIM)
+    var systemInfo = utsname()
+    uname(&systemInfo)
+    let machine = withUnsafePointer(to: &systemInfo.machine) {
+        $0.withMemoryRebound(to: CChar.self, capacity: 1) {
+            String(cString: $0)
+        }
+    }
+    
+    // Very rough check: devices iPhone11,x and newer = XS and newer
+    // You can refine with a proper list
+    if machine.hasPrefix("iPhone11") || machine.hasPrefix("iPhone12") ||
+       machine.hasPrefix("iPhone13") || machine.hasPrefix("iPhone14") ||
+       machine.hasPrefix("iPhone15") {
+        result(true)
+        return
+    }
+    
+    // Otherwise, assume no eSIM
+    result(false)
+}
 }

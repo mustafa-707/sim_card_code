@@ -1,5 +1,9 @@
 # CHANGES
 
+## 0.1.0
+
+- Added new flag `isEsim` by @Praanim , to tell us if this sim is E-sim
+
 ## 0.0.9
 
 - Handle phone number for android 13+
