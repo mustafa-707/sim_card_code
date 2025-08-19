@@ -43,6 +43,8 @@ public class SimCardCodePlugin: NSObject, FlutterPlugin {
       getDeviceId(result: result)
     case "isEsim":
         isEsim(result: result)
+    case "supportsEsim":
+        checkSupportForEsim(result:result)
     default:
       result(FlutterMethodNotImplemented)
     }
@@ -468,4 +470,28 @@ private func isEsim(result: @escaping FlutterResult) {
     // Otherwise, assume no eSIM
     result(false)
 }
+    
+    /// Checks if the device supports eSIM and returns the result via FlutterResult.
+    /// - iOS 16+: uses `supportsEmbeddedSIM` (hardware check)
+    /// - iOS 12–15: uses `supportsCellularPlan()` (installation policy)
+    ///   - Note: installation (activation) policy depends on several factors, including:
+    ///     - Carrier restrictions
+    ///     - Device management profiles (MDM) controlled by an administrator
+    ///     - Region or country-specific limitations
+    ///
+    /// - Also requires entitlement `com.apple.developer.esim-access`
+    ///
+    private func checkSupportForEsim(result: @escaping FlutterResult){
+            let provisioning = CTCellularPlanProvisioning()
+            if #available(iOS 16.0, *){
+                result(provisioning.supportsEmbeddedSIM)
+            }
+           else if #available(iOS 12.0, *){
+                result(provisioning.supportsCellularPlan())
+            }else{
+                result(false)
+            }
+        
+       
+    }
 }

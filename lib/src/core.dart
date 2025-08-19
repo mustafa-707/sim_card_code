@@ -230,6 +230,12 @@ class SimCardManager {
   /// Method to check if the device supports eSIM functionality
   /// based on hardware capabilities.
   ///
+  /// Note: On iOS less than 16.0 , actual eSIM usage may also depend on region restrictions,
+  /// carrier policies, and device management profiles.
+  ///
+  /// ⚠️ On iOS, calling `supportsEsim` requires the `com.apple.developer.esim-access` entitlement.
+  /// Without this entitlement, the check will **always return `false`**, even on devices that support eSIM.
+  ///
   static Future<bool> get supportsEsim async =>
       _supportsEsim ??= await _invoke<bool>('supportsEsim') ?? false;
 

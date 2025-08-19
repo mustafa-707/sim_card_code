@@ -16,6 +16,7 @@ A comprehensive Flutter plugin that provides extensive access to SIM card and ne
 - **Phone Number**: Retrieve the phone number associated with the SIM
 - **SIM State**: Check current SIM card state (READY, ABSENT, PIN_REQUIRED, etc.)
 - **SIM Presence**: Detect if a SIM card is present in the device
+- **Is eSIM**: Check if the SIM card is eSIM or not.
 
 ### Network Information
 
@@ -34,6 +35,7 @@ A comprehensive Flutter plugin that provides extensive access to SIM card and ne
 ### Device Information
 
 - **Device ID**: Get device IMEI/MEID identifier
+- **Supports eSim**: Tells if the device supports eSIM (Requires entitlements in IOS)
 
 ## 🔧 Installation
 
@@ -73,7 +75,7 @@ Add the following permission to your `android/app/src/main/AndroidManifest.xml`:
 
 ### iOS
 
-No additional setup required for iOS 9.0 - 13.x.
+No additional setup required for iOS 9.0 - 13.x. However, entitlement is required for a method (SimCardManager.supportsEsim)
 
 ## 🚀 Usage
 
@@ -230,6 +232,55 @@ try {
 } catch (e) {
   print('Error getting device ID: $e');
 }
+
+// If the device supports eSIM or not (entitlement is required on IOS).
+try {
+  final supportsEsim = await SimCardManager.supportsEsim;
+  print('Supports ESIM: $supportsEsim');
+} catch (e) {
+  print('Error checking eSIM compatability: $e');
+}
+```
+
+### eSIM Integration Guidelines for iOS
+
+#### Compatibility Check:
+
+You can check if eSIM functionality is supported by a device in your iOS app by following the steps below. Please note that the process involves requesting entitlement approval from Apple.
+https://developer.apple.com//contact/request/esim-access-entitlement
+
+#### Steps:
+
+##### Step 1: Request eSIM Entitlement
+
+Using your developer account, submit a request for the eSIM entitlement through the Apple Developer portal.
+
+##### Step 2: Approval Process
+
+Apple will review and approve the entitlement request. You can check the status of the approval in your app's profile settings.
+
+##### Step 3: Download Profiles
+
+Download the App Development and Distribution profiles. Ensure that the eSIM entitlement is selected as part of Step #2 in the profile settings.
+
+##### Step 4: Update Info.plist
+
+Update your Info.plist file with the following keys and values:
+
+```xml
+<key>CarrierDescriptors</key>
+<array>
+  <dict>
+    <key>GID1</key>
+    <string>***</string>
+    <key>GID2</key>
+    <string>***</string>
+    <key>MCC</key> <!-- Country Code -->
+    <string>***</string>
+    <key>MNC</key> <!-- Network Code -->
+    <string>***</string>
+  </dict>
+</array>
 ```
 
 ## 📊 SIM States
