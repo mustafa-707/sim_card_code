@@ -178,6 +178,7 @@ class SimCardManager {
   static bool? _isEsim;
   static String? _deviceId;
   static List<SimCardInfo>? _allSimInfo;
+  static bool? _supportsEsim;
 
   static Future<String?> get simCountryCode async =>
       _simCountryCode ??= await _invoke<String>('getSimCountryCode');
@@ -221,8 +222,22 @@ class SimCardManager {
   static Future<bool> get isDualSim async =>
       _isDualSim ??= await _invoke<bool>('isDualSim') ?? false;
 
+  /// Method to tell whether the default SIM is and ESIM or not
+  ///
   static Future<bool> get isEsim async =>
       _isEsim ??= await _invoke<bool>('isEsim') ?? false;
+
+  /// Method to check if the device supports eSIM functionality
+  /// based on hardware capabilities.
+  ///
+  /// Note: On iOS less than 16.0 , actual eSIM usage may also depend on region restrictions,
+  /// carrier policies, and device management profiles.
+  ///
+  /// ⚠️ On iOS, calling `supportsEsim` requires the `com.apple.developer.esim-access` entitlement.
+  /// Without this entitlement, the check will **always return `false`**, even on devices that support eSIM.
+  ///
+  static Future<bool> get supportsEsim async =>
+      _supportsEsim ??= await _invoke<bool>('supportsEsim') ?? false;
 
   static Future<String?> get deviceId async =>
       _deviceId ??= await _invoke<String>('getDeviceId');

@@ -44,6 +44,7 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
       "isDualSim" -> isDualSim(result)
       "isEsim" -> isEsim(result)
       "getDeviceId" -> getDeviceId(result)
+      "supportsEsim" -> checkSupportForEsim(result)
       else -> result.notImplemented()
     }
   }
@@ -449,6 +450,26 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
       result.success(if (deviceId.isNullOrEmpty()) null else deviceId)
     } catch (e: Exception) {
       result.error("DEVICE_ID_ERROR", e.message, null)
+    }
+  }
+
+  /**
+   * Method which checks if the device has support for eSIM based on the the hardware component.
+   *
+   */
+  private fun checkSupportForEsim(result:Result){
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P){
+      val pm = context.packageManager
+      try{
+        val hasEuiccFeature = pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_EUICC)
+
+        result.success(hasEuiccFeature)
+      }catch (e: Exception){
+        result.error("ESIM_CHECK_ERROR",e.message,null)
+      }
+    }
+    else{
+      result.success(false)
     }
   }
 
