@@ -1,5 +1,46 @@
 # CHANGES
 
+## 0.2.0
+
+- **Swift Package Manager (SPM) support** — the iOS plugin now ships a
+  `Package.swift`, so apps built with `--enable-swift-package-manager` (the
+  upcoming Flutter default) no longer need CocoaPods. CocoaPods stays fully
+  supported. Resolves [#8](https://github.com/mustafa-707/sim_card_code/issues/8).
+- **Multi-SIM support** — new `SimCardManager.simInfoForSubscription(subscriptionId)`
+  returns full info for a specific SIM via `TelephonyManager.createForSubscriptionId`
+  on Android. Resolves [#6](https://github.com/mustafa-707/sim_card_code/issues/6).
+- **Reactive change streams** — new `SimCardManager.onChanged` broadcast
+  `Stream<SimCardChangeEvent>` fires on SIM insert/remove/swap and on
+  network/operator/roaming changes. The cache is refreshed automatically
+  before each event, so reads inside a listener return fresh data.
+- **Typed network info** — added `NetworkType` and `NetworkGeneration` (2G–5G)
+  enums, exposed via `NetworkInfo.type`, `NetworkInfo.generation` and
+  `SimCardManager.networkGeneration`. The existing `networkType` string getter
+  is unchanged.
+- **Opt-in typed errors** — set `SimCardManager.throwOnError = true` to receive
+  a `SimCardException` (with an error code) on failure instead of a silent
+  `null`. Defaults to `false`, so existing behavior is preserved.
+- Internal: split the Dart source into `models.dart` + `manager.dart`
+  (no public API change).
+- iOS: restructured `ios/` into the SPM package layout
+  (`ios/sim_card_code/Sources/...`); CocoaPods consumers are unaffected.
+- iOS: minimum deployment target raised to 13.0 to match current Flutter.
+- iOS: corrected the podspec metadata (homepage, author, summary, version).
+- iOS: `isEsim` device-model fallback now parses the model's major number, so
+  it stays correct for iPhone 16, 17 and future models instead of relying on a
+  hardcoded identifier list.
+- Fixed `SimCardManager.clearCache()` not clearing the cached `supportsEsim`
+  value.
+- Android: bumped Kotlin 2.1.0 → 2.3.21, Android Gradle Plugin 8.7.3 → 8.11.1,
+  `compileSdk` 35 → 36.
+- Android: pinned the Gradle wrapper to stable 8.14 (was the `9.0-milestone-1`
+  pre-release).
+- Removed the legacy Android unit-test scaffold.
+- Added `flutter_lints` + `analysis_options.yaml` and formatted the codebase.
+- Improved the README and example app.
+
+No breaking changes — the existing public Dart API is unchanged.
+
 ## 0.1.0
 
 - Added new flag `isEsim` by @Praanim , to tell us if this sim is E-sim

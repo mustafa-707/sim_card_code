@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -37,6 +38,9 @@ class _SimCardDashboardState extends State<SimCardDashboard>
   List<SimCardInfo> _allSimInfo = [];
   NetworkInfo? _networkInfo;
 
+  // Live change stream
+  StreamSubscription<SimCardChangeEvent>? _changeSub;
+
   // Device Information
   String? _deviceId;
   bool _hasSimCard = false;
@@ -55,10 +59,19 @@ class _SimCardDashboardState extends State<SimCardDashboard>
     _tabController = TabController(length: 3, vsync: this);
     _loadAllInformation();
     requestPermissions();
+    // Live-refresh whenever a SIM or network change is reported.
+    _changeSub = SimCardManager.onChanged.listen((event) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Cellular change: ${event.type.name}')),
+      );
+      _loadAllInformation();
+    });
   }
 
   @override
   void dispose() {
+    _changeSub?.cancel();
     _tabController.dispose();
     super.dispose();
   }
@@ -233,7 +246,6 @@ class _SimCardDashboardState extends State<SimCardDashboard>
                   _simCount.toString(),
                   _hasSimCard ? Colors.green : Colors.red,
                 ),
-
                 _buildStatusChip(
                   'Dual SIM',
                   _isDualSim ? 'Yes' : 'No',
@@ -319,8 +331,46 @@ class _SimCardDashboardState extends State<SimCardDashboard>
             ),
             const SizedBox(height: 16),
             ..._buildSimInfoRows(simInfo),
+            if (simInfo.subscriptionId != null) ...[
+              const Divider(height: 24),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () => _querySubscription(simInfo.subscriptionId!),
+                  icon: const Icon(Icons.search),
+                  label: const Text('Query by subscription ID'),
+                ),
+              ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+
+  /// Demonstrates [SimCardManager.simInfoForSubscription] — fetching a single
+  /// SIM directly by its subscription id (multi-SIM support).
+  Future<void> _querySubscription(int subscriptionId) async {
+    final info = await SimCardManager.simInfoForSubscription(subscriptionId);
+    if (!mounted) return;
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Subscription $subscriptionId'),
+        content: Text(
+          info == null
+              ? 'No data for this subscription.\n\n'
+                    'iOS exposes no integer subscription id — use the SIM '
+                    'list above there instead.'
+              : info.toString(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }
@@ -332,9 +382,10 @@ class _SimCardDashboardState extends State<SimCardDashboard>
       _buildInfoRow('Operator Code', simInfo.operatorCode ?? 'N/A'),
       _buildInfoRow('Phone Number', simInfo.phoneNumber ?? 'N/A'),
       _buildInfoRow('SIM State', simInfo.simState?.name ?? 'Unknown'),
+      if (simInfo.subscriptionId != null)
+        _buildInfoRow('Subscription ID', simInfo.subscriptionId.toString()),
       if (simInfo.isRoaming != null)
         _buildInfoRow('Roaming', (simInfo.isRoaming ?? false) ? 'Yes' : 'No'),
-
       if (simInfo.isEsim != null)
         _buildInfoRow('eSIM', (simInfo.isEsim ?? false) ? 'Yes' : 'No'),
       if (simInfo.isEsim == null && Platform.isIOS)
@@ -426,6 +477,10 @@ class _SimCardDashboardState extends State<SimCardDashboard>
                   _buildInfoRow(
                     'Network Type',
                     _networkInfo?.networkType ?? 'N/A',
+                  ),
+                  _buildInfoRow(
+                    'Generation',
+                    _networkInfo?.generation.label ?? 'N/A',
                   ),
                   _buildInfoRow(
                     'Roaming Status',

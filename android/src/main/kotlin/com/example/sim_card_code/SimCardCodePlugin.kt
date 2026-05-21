@@ -4,25 +4,35 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.telephony.PhoneStateListener
+import android.telephony.ServiceState
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 import androidx.annotation.NonNull
 import androidx.core.app.ActivityCompat
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 
 /** SimCardCodePlugin */
-class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
+class SimCardCodePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler {
   private lateinit var channel : MethodChannel
+  private lateinit var eventChannel: EventChannel
   private lateinit var context: Context
+
+  private var eventSink: EventChannel.EventSink? = null
+  private var phoneStateListener: PhoneStateListener? = null
+  private var subscriptionsListener: SubscriptionManager.OnSubscriptionsChangedListener? = null
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     channel = MethodChannel(flutterPluginBinding.binaryMessenger, "sim_card_code")
     channel.setMethodCallHandler(this)
+    eventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "sim_card_code/events")
+    eventChannel.setStreamHandler(this)
     context = flutterPluginBinding.applicationContext
   }
 
@@ -45,8 +55,23 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
       "isEsim" -> isEsim(result)
       "getDeviceId" -> getDeviceId(result)
       "supportsEsim" -> checkSupportForEsim(result)
+      "getSimInfoForSubscription" -> getSimInfoForSubscription(call, result)
       else -> result.notImplemented()
     }
+  }
+
+  /** Maps a [TelephonyManager] SIM state constant to a stable string. */
+  private fun simStateName(state: Int?): String = when (state) {
+    TelephonyManager.SIM_STATE_ABSENT -> "ABSENT"
+    TelephonyManager.SIM_STATE_PIN_REQUIRED -> "PIN_REQUIRED"
+    TelephonyManager.SIM_STATE_PUK_REQUIRED -> "PUK_REQUIRED"
+    TelephonyManager.SIM_STATE_NETWORK_LOCKED -> "NETWORK_LOCKED"
+    TelephonyManager.SIM_STATE_READY -> "READY"
+    TelephonyManager.SIM_STATE_NOT_READY -> "NOT_READY"
+    TelephonyManager.SIM_STATE_PERM_DISABLED -> "PERM_DISABLED"
+    TelephonyManager.SIM_STATE_CARD_IO_ERROR -> "CARD_IO_ERROR"
+    TelephonyManager.SIM_STATE_CARD_RESTRICTED -> "CARD_RESTRICTED"
+    else -> "UNKNOWN"
   }
 
   private fun getSimCountryCode(result: Result) {
@@ -108,19 +133,7 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
   private fun getSimState(result: Result) {
     try {
       val manager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
-      val state = when (manager?.simState) {
-        TelephonyManager.SIM_STATE_ABSENT -> "ABSENT"
-        TelephonyManager.SIM_STATE_PIN_REQUIRED -> "PIN_REQUIRED"
-        TelephonyManager.SIM_STATE_PUK_REQUIRED -> "PUK_REQUIRED"
-        TelephonyManager.SIM_STATE_NETWORK_LOCKED -> "NETWORK_LOCKED"
-        TelephonyManager.SIM_STATE_READY -> "READY"
-        TelephonyManager.SIM_STATE_NOT_READY -> "NOT_READY"
-        TelephonyManager.SIM_STATE_PERM_DISABLED -> "PERM_DISABLED"
-        TelephonyManager.SIM_STATE_CARD_IO_ERROR -> "CARD_IO_ERROR"
-        TelephonyManager.SIM_STATE_CARD_RESTRICTED -> "CARD_RESTRICTED"
-        else -> "UNKNOWN"
-      }
-      result.success(state)
+      result.success(simStateName(manager?.simState))
     } catch (e: Exception) {
       result.error("SIM_STATE_ERROR", e.message, null)
     }
@@ -335,18 +348,7 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
           }
 
           // Get SIM state
-          val simState = when (subTelephonyManager?.simState) {
-            TelephonyManager.SIM_STATE_ABSENT -> "ABSENT"
-            TelephonyManager.SIM_STATE_PIN_REQUIRED -> "PIN_REQUIRED"
-            TelephonyManager.SIM_STATE_PUK_REQUIRED -> "PUK_REQUIRED"
-            TelephonyManager.SIM_STATE_NETWORK_LOCKED -> "NETWORK_LOCKED"
-            TelephonyManager.SIM_STATE_READY -> "READY"
-            TelephonyManager.SIM_STATE_NOT_READY -> "NOT_READY"
-            TelephonyManager.SIM_STATE_PERM_DISABLED -> "PERM_DISABLED"
-            TelephonyManager.SIM_STATE_CARD_IO_ERROR -> "CARD_IO_ERROR"
-            TelephonyManager.SIM_STATE_CARD_RESTRICTED -> "CARD_RESTRICTED"
-            else -> "UNKNOWN"
-          }
+          val simState = simStateName(subTelephonyManager?.simState)
 
           // Get phone number - this might be empty for many carriers
           val phoneNumber = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -383,19 +385,8 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
       } else {
         // Fallback for older Android versions
         val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
-        
-        val simState = when (telephonyManager?.simState) {
-          TelephonyManager.SIM_STATE_ABSENT -> "ABSENT"
-          TelephonyManager.SIM_STATE_PIN_REQUIRED -> "PIN_REQUIRED"
-          TelephonyManager.SIM_STATE_PUK_REQUIRED -> "PUK_REQUIRED"
-          TelephonyManager.SIM_STATE_NETWORK_LOCKED -> "NETWORK_LOCKED"
-          TelephonyManager.SIM_STATE_READY -> "READY"
-          TelephonyManager.SIM_STATE_NOT_READY -> "NOT_READY"
-          TelephonyManager.SIM_STATE_PERM_DISABLED -> "PERM_DISABLED"
-          TelephonyManager.SIM_STATE_CARD_IO_ERROR -> "CARD_IO_ERROR"
-          TelephonyManager.SIM_STATE_CARD_RESTRICTED -> "CARD_RESTRICTED"
-          else -> "UNKNOWN"
-        }
+
+        val simState = simStateName(telephonyManager?.simState)
 
         val simInfo = mapOf(
           "isEsim" to false, // older version dont have e-sim feature
@@ -473,7 +464,169 @@ class SimCardCodePlugin: FlutterPlugin, MethodCallHandler {
     }
   }
 
+  /**
+   * Returns full information for a single SIM identified by its [subscriptionId].
+   *
+   * Resolves multi-SIM use cases where the default-SIM-bound getters are not
+   * enough. Uses [TelephonyManager.createForSubscriptionId] so values come from
+   * the requested SIM rather than the default voice/data SIM.
+   *
+   * Returns `null` when the subscription is not active or on Android < 22.
+   */
+  private fun getSimInfoForSubscription(call: MethodCall, result: Result) {
+    try {
+      if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+        result.error("PERMISSION_DENIED", "READ_PHONE_STATE permission required", null)
+        return
+      }
+
+      val subscriptionId = call.argument<Int>("subscriptionId")
+      if (subscriptionId == null) {
+        result.error("INVALID_ARGUMENT", "subscriptionId is required", null)
+        return
+      }
+
+      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1) {
+        result.success(null)
+        return
+      }
+
+      val subscriptionManager = context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager?
+      val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
+      val subscriptionInfo = subscriptionManager?.getActiveSubscriptionInfo(subscriptionId)
+
+      if (subscriptionInfo == null) {
+        // No active SIM matches this subscription id.
+        result.success(null)
+        return
+      }
+
+      val subTelephonyManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        telephonyManager?.createForSubscriptionId(subscriptionId)
+      } else {
+        telephonyManager
+      }
+
+      val isEmbedded = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        subscriptionInfo.isEmbedded
+      } else {
+        false
+      }
+
+      val serialNumber = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        try {
+          subTelephonyManager?.simSerialNumber
+        } catch (e: Exception) {
+          null
+        }
+      } else {
+        null
+      }
+
+      val phoneNumber = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        try {
+          subscriptionManager.getPhoneNumber(subscriptionId)?.takeIf { it.isNotEmpty() }
+        } catch (e: Exception) {
+          null
+        }
+      } else {
+        try {
+          subTelephonyManager?.line1Number?.takeIf { it.isNotEmpty() }
+        } catch (e: Exception) {
+          null
+        }
+      }
+
+      val simInfo = mapOf(
+        "isEsim" to isEmbedded,
+        "slotIndex" to subscriptionInfo.simSlotIndex,
+        "subscriptionId" to subscriptionInfo.subscriptionId,
+        "displayName" to subscriptionInfo.displayName?.toString(),
+        "carrierName" to subscriptionInfo.carrierName?.toString(),
+        "countryIso" to subscriptionInfo.countryIso?.uppercase(),
+        "isNetworkRoaming" to subscriptionInfo.dataRoaming,
+        "phoneNumber" to phoneNumber,
+        "operatorCode" to subTelephonyManager?.simOperator,
+        "serialNumber" to serialNumber,
+        "simState" to simStateName(subTelephonyManager?.simState)
+      )
+      result.success(simInfo)
+    } catch (e: SecurityException) {
+      result.error("PERMISSION_DENIED", e.message ?: "Permission denied", null)
+    } catch (e: Exception) {
+      result.error("SIM_INFO_FOR_SUBSCRIPTION_ERROR", e.message, null)
+    }
+  }
+
+  override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+    eventSink = events
+    registerChangeListeners()
+  }
+
+  override fun onCancel(arguments: Any?) {
+    unregisterChangeListeners()
+    eventSink = null
+  }
+
+  /** Registers telephony listeners that push change events to [eventSink]. */
+  @Suppress("DEPRECATION")
+  private fun registerChangeListeners() {
+    // Network / service-state changes (no permission required).
+    val telephonyManager =
+      context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
+    val listener = object : PhoneStateListener() {
+      override fun onServiceStateChanged(serviceState: ServiceState?) {
+        eventSink?.success("network")
+      }
+    }
+    telephonyManager?.listen(listener, PhoneStateListener.LISTEN_SERVICE_STATE)
+    phoneStateListener = listener
+
+    // SIM insert / remove / swap.
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+      val subscriptionManager =
+        context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager?
+      val subListener = object : SubscriptionManager.OnSubscriptionsChangedListener() {
+        override fun onSubscriptionsChanged() {
+          eventSink?.success("sim")
+        }
+      }
+      try {
+        subscriptionManager?.addOnSubscriptionsChangedListener(subListener)
+        subscriptionsListener = subListener
+      } catch (e: Exception) {
+        // Ignore — the network listener still delivers change events.
+      }
+    }
+  }
+
+  /** Detaches the telephony listeners registered by [registerChangeListeners]. */
+  @Suppress("DEPRECATION")
+  private fun unregisterChangeListeners() {
+    phoneStateListener?.let {
+      val telephonyManager =
+        context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
+      telephonyManager?.listen(it, PhoneStateListener.LISTEN_NONE)
+    }
+    phoneStateListener = null
+
+    subscriptionsListener?.let {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+        val subscriptionManager =
+          context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager?
+        try {
+          subscriptionManager?.removeOnSubscriptionsChangedListener(it)
+        } catch (e: Exception) {
+          // Ignore.
+        }
+      }
+    }
+    subscriptionsListener = null
+  }
+
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
     channel.setMethodCallHandler(null)
+    eventChannel.setStreamHandler(null)
+    unregisterChangeListeners()
   }
 }

@@ -4,18 +4,20 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'sim_card_code'
-  s.version          = '0.0.7'
-  s.summary          = 'A new Flutter plugin project.'
+  s.version          = '0.2.0'
+  s.summary          = 'A Flutter plugin for accessing SIM card and device cellular information.'
   s.description      = <<-DESC
-A new Flutter plugin project.
+A Flutter plugin for accessing SIM card details, phone number country code,
+network info, eSIM status and multi-SIM (subscription) information.
                        DESC
-  s.homepage         = 'http://example.com'
+  s.homepage         = 'https://github.com/mustafa-707/sim_card_code'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Your Company' => 'email@example.com' }
+  s.author           = { 'mustafa-707' => 'https://github.com/mustafa-707' }
   s.source           = { :path => '.' }
-  s.source_files = 'Classes/**/*'
+  s.source_files     = 'sim_card_code/Sources/sim_card_code/**/*.swift'
+  s.resource_bundles = { 'sim_card_code_privacy' => ['sim_card_code/Sources/sim_card_code/PrivacyInfo.xcprivacy'] }
   s.dependency 'Flutter'
-  s.platform = :ios, '12.0'
+  s.platform = :ios, '13.0'
   s.frameworks = 'CoreTelephony'
 
   # Flutter.framework does not contain a i386 slice.
