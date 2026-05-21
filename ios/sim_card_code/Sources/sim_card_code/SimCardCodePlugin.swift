@@ -2,11 +2,44 @@ import Flutter
 import UIKit
 import CoreTelephony
 
-public class SimCardCodePlugin: NSObject, FlutterPlugin {
+public class SimCardCodePlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
+  private var eventSink: FlutterEventSink?
+  private let changeNetworkInfo = CTTelephonyNetworkInfo()
+
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "sim_card_code", binaryMessenger: registrar.messenger())
+    let eventChannel = FlutterEventChannel(name: "sim_card_code/events", binaryMessenger: registrar.messenger())
     let instance = SimCardCodePlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)
+    eventChannel.setStreamHandler(instance)
+  }
+
+  public func onListen(withArguments arguments: Any?,
+                       eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+    eventSink = events
+    // Carrier / SIM updates.
+    changeNetworkInfo.serviceSubscriberCellularProvidersDidUpdateNotifier = { [weak self] _ in
+      DispatchQueue.main.async { self?.eventSink?("sim") }
+    }
+    // Radio access technology (network) updates.
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(radioAccessTechnologyDidChange),
+      name: .CTRadioAccessTechnologyDidChange,
+      object: nil
+    )
+    return nil
+  }
+
+  @objc private func radioAccessTechnologyDidChange() {
+    DispatchQueue.main.async { [weak self] in self?.eventSink?("network") }
+  }
+
+  public func onCancel(withArguments arguments: Any?) -> FlutterError? {
+    changeNetworkInfo.serviceSubscriberCellularProvidersDidUpdateNotifier = nil
+    NotificationCenter.default.removeObserver(self)
+    eventSink = nil
+    return nil
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -45,9 +78,18 @@ public class SimCardCodePlugin: NSObject, FlutterPlugin {
         isEsim(result: result)
     case "supportsEsim":
         checkSupportForEsim(result:result)
+    case "getSimInfoForSubscription":
+        getSimInfoForSubscription(result: result)
     default:
       result(FlutterMethodNotImplemented)
     }
+  }
+
+  /// iOS has no integer subscription id (CoreTelephony keys carriers by an
+  /// opaque service identifier). Per-SIM data is exposed through `getAllSimInfo`
+  /// instead, so this returns `nil` on iOS.
+  private func getSimInfoForSubscription(result: @escaping FlutterResult) {
+    result(nil)
   }
 
   // Helper method to get fallback country code from locale
@@ -458,15 +500,18 @@ private func isEsim(result: @escaping FlutterResult) {
         }
     }
     
-    // Very rough check: devices iPhone11,x and newer = XS and newer
-    // You can refine with a proper list
-    if machine.hasPrefix("iPhone11") || machine.hasPrefix("iPhone12") ||
-       machine.hasPrefix("iPhone13") || machine.hasPrefix("iPhone14") ||
-       machine.hasPrefix("iPhone15") {
+    // Rough check: every iPhone from the XS / XR generation onward supports
+    // eSIM. Those identifiers start at "iPhone11,x", so parse the major number
+    // and treat 11+ as eSIM-capable — this stays correct for future models
+    // (iPhone16,x, iPhone17,x, …) instead of relying on a hardcoded list.
+    if machine.hasPrefix("iPhone"),
+       let comma = machine.firstIndex(of: ","),
+       let major = Int(machine[machine.index(machine.startIndex, offsetBy: 6)..<comma]),
+       major >= 11 {
         result(true)
         return
     }
-    
+
     // Otherwise, assume no eSIM
     result(false)
 }

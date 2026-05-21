@@ -1,370 +1,322 @@
-# Sim Card Info Plugin
+# sim_card_code
 
 [![StandWithPalestine](https://raw.githubusercontent.com/TheBSD/StandWithPalestine/main/badges/StandWithPalestine.svg)](https://github.com/TheBSD/StandWithPalestine/blob/main/docs/README.md)
 [![Pub Version](https://img.shields.io/pub/v/sim_card_code.svg)](https://pub.dev/packages/sim_card_code)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-A comprehensive Flutter plugin that provides extensive access to SIM card and network information across iOS and Android platforms. Get detailed information about SIM cards, network operators, device identifiers, and dual SIM support.
+A Flutter plugin for reading SIM card and cellular network information on
+Android and iOS — country code, operator, network type, eSIM status, dual-SIM
+details and more.
+
+> ⚠️ **Privacy first.** Some values (phone number, IMEI, ICCID) are sensitive
+> and gated behind permissions. Read [Privacy considerations](#-privacy-considerations)
+> before shipping.
+
+## Contents
+
+- [Features](#-features)
+- [Installation](#-installation)
+- [Platform support](#-platform-support)
+- [Permissions & setup](#-permissions--setup)
+- [Usage](#-usage)
+- [Multi-SIM (subscription) support](#-multi-sim-subscription-support)
+- [Reacting to changes](#-reacting-to-changes)
+- [API reference](#-api-reference)
+- [SIM states](#-sim-states) · [Network types](#-network-types)
+- [Error handling](#-error-handling)
+- [Privacy considerations](#-privacy-considerations)
 
 ## 📋 Features
 
-### SIM Card Information
-
-- **Country Code**: Retrieve SIM card country code in ISO format (e.g., "US", "UK", "IN")
-- **Operator Details**: Get SIM operator name and operator code
-- **Serial Number**: Access SIM card serial number (ICCID)
-- **Phone Number**: Retrieve the phone number associated with the SIM
-- **SIM State**: Check current SIM card state (READY, ABSENT, PIN_REQUIRED, etc.)
-- **SIM Presence**: Detect if a SIM card is present in the device
-- **Is eSIM**: Check if the SIM card is eSIM or not.
-
-### Network Information
-
-- **Network Operator**: Get current network operator name
-- **Network Country**: Retrieve network country code
-- **Network Type**: Identify network technology (LTE, 5G, HSPA, EDGE, etc.)
-- **Roaming Status**: Check if device is currently roaming
-
-### Dual SIM Support
-
-- **SIM Count**: Get total number of SIM slots
-- **Dual SIM Detection**: Check if device supports dual SIM
-- **All SIM Info**: Retrieve detailed information for all active SIM cards
-- **Multi-SIM Management**: Handle multiple subscriptions and SIM slots
-
-### Device Information
-
-- **Device ID**: Get device IMEI/MEID identifier
-- **Supports eSim**: Tells if the device supports eSIM (Requires entitlements in IOS)
+| Category | What you get |
+| -------- | ------------ |
+| **SIM card** | Country code (ISO), operator name & code, ICCID, phone number, SIM state, presence, eSIM flag |
+| **Network** | Operator name, country code, network type (5G/LTE/HSPA/…), roaming status |
+| **Dual / multi-SIM** | SIM count, dual-SIM detection, per-SIM info, lookup by subscription id |
+| **Device** | Device id (IMEI/MEID), hardware eSIM support |
+| **Live updates** | Reactive stream of SIM / network / roaming changes |
 
 ## 🔧 Installation
 
-Add `sim_card_code` to your `pubspec.yaml`:
-
 ```yaml
 dependencies:
-  sim_card_code: ^latest_version
+  sim_card_code: ^0.2.0
 ```
-
-Then run:
 
 ```bash
 flutter pub get
 ```
 
-## 📱 Platform Support
+### iOS — CocoaPods or Swift Package Manager
 
-| Platform   | Support |
-| ---------- | ------- |
-| Android    | ✅      |
-| iOS (9.0+) | ✅      |
-| Web        | ❌      |
-| macOS      | ❌      |
-| Windows    | ❌      |
-| Linux      | ❌      |
+The iOS plugin ships **both** a CocoaPods podspec and a `Package.swift`, so it
+works whether or not your app has Swift Package Manager enabled — no extra steps
+required. Apps using `--enable-swift-package-manager` (becoming the Flutter
+default) resolve the plugin through SPM automatically; everyone else keeps using
+CocoaPods.
 
-## 🔐 Permissions
+## 📱 Platform support
+
+| Platform | Support | Notes |
+| -------- | :-----: | ----- |
+| Android  | ✅ | API 21+ |
+| iOS      | ✅ | iOS 13.0+ |
+| Web / macOS / Windows / Linux | ❌ | Not applicable |
+
+## 🔐 Permissions & setup
 
 ### Android
 
-Add the following permission to your `android/app/src/main/AndroidManifest.xml`:
+Add to `android/app/src/main/AndroidManifest.xml`:
 
 ```xml
 <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 ```
 
+`READ_PHONE_STATE` is a runtime permission — request it before calling methods
+that need it (`phoneNumber`, `simSerialNumber`, `deviceId`, `allSimInfo`,
+`isEsim`, `simInfoForSubscription`). Use a package such as
+[`permission_handler`](https://pub.dev/packages/permission_handler):
+
+```dart
+import 'package:permission_handler/permission_handler.dart';
+
+await Permission.phone.request();
+```
+
 ### iOS
 
-No additional setup required for iOS 9.0 - 13.x. However, entitlement is required for a method (SimCardManager.supportsEsim)
+No setup is required for most methods. `SimCardManager.supportsEsim` needs the
+`com.apple.developer.esim-access` entitlement — see
+[eSIM on iOS](#esim-on-ios). Several values are unavailable on iOS for privacy
+reasons (see [API reference](#-api-reference)).
 
 ## 🚀 Usage
-
-Import the package:
 
 ```dart
 import 'package:sim_card_code/sim_card_code.dart';
 ```
 
-### Basic SIM Information
+### Basic SIM information
 
 ```dart
-// Get SIM country code
-try {
-  final countryCode = await SimCardManager.simCountryCode;
-  print('SIM Country Code: $countryCode'); // Output: "US", "UK", "IN"
-} catch (e) {
-  print('Error getting country code: $e');
-}
+final countryCode  = await SimCardManager.simCountryCode;   // "US", "UK", "IN"
+final operatorName = await SimCardManager.simOperatorName;  // "Verizon", "Vodafone"
+final operatorCode = await SimCardManager.simOperatorCode;  // "310260"
+final hasSim       = await SimCardManager.hasSimCard;       // true / false
+final simState     = await SimCardManager.simState;         // SimState.ready, …
+```
 
-// Get SIM operator name
-try {
-  final operatorName = await SimCardManager.simOperatorName;
-  print('SIM Operator: $operatorName'); // Output: "Verizon", "Vodafone", etc.
-} catch (e) {
-  print('Error getting operator name: $e');
-}
+### Network information
 
-// Get SIM operator code
-try {
-  final operatorCode = await SimCardManager.simOperatorCode;
-  print('Operator Code: $operatorCode'); // Output: "310260", etc.
-} catch (e) {
-  print('Error getting operator code: $e');
+```dart
+final network = await SimCardManager.networkInfo;
+print(network.operatorName);      // current network operator
+print(network.countryCode);       // network country code
+print(network.networkType);       // raw string: "LTE", "5G", …
+print(network.type);              // typed: NetworkType.lte
+print(network.generation.label);  // "4G" (also NetworkGeneration enum)
+print(network.isRoaming);         // true / false
+```
+
+### Dual-SIM
+
+```dart
+final isDualSim = await SimCardManager.isDualSim;
+final simCount  = await SimCardManager.simCount;
+
+// allSimInfo returns a typed List<SimCardInfo>
+final allSims = await SimCardManager.allSimInfo;
+for (final sim in allSims) {
+  print('Slot ${sim.slotIndex} · subId ${sim.subscriptionId}');
+  print('  ${sim.carrierName} (${sim.countryCode})');
+  print('  eSIM: ${sim.isEsim} · state: ${sim.simState?.name}');
 }
 ```
 
-### SIM State and Presence
+### Sensitive values (Android — requires `READ_PHONE_STATE`)
 
 ```dart
-// Check if SIM card is present
-try {
-  final hasSimCard = await SimCardManager.hasSimCard;
-  print('Has SIM Card: $hasSimCard');
-} catch (e) {
-  print('Error checking SIM presence: $e');
-}
+final serial   = await SimCardManager.simSerialNumber;  // ICCID — Android only
+final phone    = await SimCardManager.phoneNumber;      // Android only
+final deviceId = await SimCardManager.deviceId;         // IMEI/MEID — Android only
+```
 
-// Get SIM state
-try {
-  final simState = await SimCardManager.simState;
-  print('SIM State: $simState'); // READY, ABSENT, PIN_REQUIRED, etc.
-} catch (e) {
-  print('Error getting SIM state: $e');
+## 🔀 Multi-SIM (subscription) support
+
+On multi-SIM devices the default getters (`simCountryCode`, `isEsim`, …) always
+report the **default** SIM. To target a specific SIM, use
+`simInfoForSubscription` with a subscription id taken from `allSimInfo`:
+
+```dart
+final allSims = await SimCardManager.allSimInfo;
+
+for (final sim in allSims) {
+  final subId = sim.subscriptionId;
+  if (subId == null) continue;
+
+  final info = await SimCardManager.simInfoForSubscription(subId);
+  print('SIM $subId → ${info?.carrierName}, eSIM: ${info?.isEsim}');
 }
 ```
 
-### Network Information
+On Android the data is read through `TelephonyManager.createForSubscriptionId`,
+so the values reflect the requested SIM. It returns `null` when the subscription
+is inactive, on Android < 22, or on **iOS** — iOS has no integer subscription id,
+so use `allSimInfo` there instead.
+
+## 🔔 Reacting to changes
+
+`SimCardManager.onChanged` is a broadcast stream that emits a
+`SimCardChangeEvent` whenever a SIM is inserted, removed or swapped, or the
+network / operator / roaming state changes. The plugin clears its cache before
+each event, so any getter read inside the listener returns fresh data:
 
 ```dart
-// Get network operator name
-try {
-  final networkOperator = await SimCardManager.networkOperatorName;
-  print('Network Operator: $networkOperator');
-} catch (e) {
-  print('Error getting network operator: $e');
-}
-
-// Get network country code
-try {
-  final networkCountryCode = await SimCardManager.networkCountryCode;
-  print('Network Country Code: $networkCountryCode');
-} catch (e) {
-  print('Error getting network country code: $e');
-}
-
-// Get network type
-try {
-  final networkType = await SimCardManager.networkType;
-  print('Network Type: $networkType'); // LTE, HSPA, EDGE, etc.
-} catch (e) {
-  print('Error getting network type: $e');
-}
-
-// Check roaming status
-try {
-  final isRoaming = await SimCardManager.isRoaming;
-  print('Is Roaming: $isRoaming');
-} catch (e) {
-  print('Error checking roaming status: $e');
-}
-```
-
-### Dual SIM Support
-
-```dart
-// Check if device supports dual SIM
-try {
-  final isDualSim = await SimCardManager.isDualSim;
-  print('Is Dual SIM: $isDualSim');
-} catch (e) {
-  print('Error checking dual SIM support: $e');
-}
-
-// Get SIM count
-try {
-  final simCount = await SimCardManager.simCount;
-  print('SIM Count: $simCount');
-} catch (e) {
-  print('Error getting SIM count: $e');
-}
-
-// Get all SIM information
-try {
-  final allSimInfo = await SimCardManager.getAllSimInfo;
-  for (var simInfo in allSimInfo) {
-    print('Slot Index: ${simInfo['slotIndex']}');
-    print('Subscription ID: ${simInfo['subscriptionId']}');
-    print('Display Name: ${simInfo['displayName']}');
-    print('Carrier Name: ${simInfo['carrierName']}');
-    print('Country ISO: ${simInfo['countryIso']}');
-    print('Phone Number: ${simInfo['phoneNumber']}');
-    print('Is Roaming: ${simInfo['isNetworkRoaming']}');
-    print('---');
+final sub = SimCardManager.onChanged.listen((event) async {
+  switch (event.type) {
+    case SimChangeType.sim:
+      print('SIM changed');
+    case SimChangeType.network:
+      print('Network changed');
+    case SimChangeType.unknown:
+      break;
   }
-} catch (e) {
-  print('Error getting all SIM info: $e');
-}
+  final info = await SimCardManager.basicSimInfo; // already fresh
+});
+
+// Cancel the subscription when updates are no longer needed.
+await sub.cancel();
 ```
 
-### Sensitive Information (Requires Permissions)
+Android detects SIM insert/remove/swap and service-state changes; iOS reports
+carrier and radio-technology updates via `CoreTelephony`.
 
-```dart
-// Get SIM serial number (ICCID)
-try {
-  final serialNumber = await SimCardManager.simSerialNumber;
-  print('SIM Serial Number: $serialNumber');
-} catch (e) {
-  print('Error getting SIM serial number: $e');
-}
+## 📖 API reference
 
-// Get phone number
-try {
-  final phoneNumber = await SimCardManager.phoneNumber;
-  print('Phone Number: $phoneNumber');
-} catch (e) {
-  print('Error getting phone number: $e');
-}
+All members of `SimCardManager` are `static`. Getters cache their result; call
+`SimCardManager.clearCache()` to force a refresh.
 
-// Get device ID (IMEI/MEID)
-try {
-  final deviceId = await SimCardManager.deviceId;
-  print('Device ID: $deviceId');
-} catch (e) {
-  print('Error getting device ID: $e');
-}
+| Member | Returns | iOS |
+| ------ | ------- | :-: |
+| `simCountryCode` | `Future<String?>` | ✅ |
+| `simOperatorName` | `Future<String?>` | ✅ |
+| `simOperatorCode` | `Future<String?>` | ✅ |
+| `simSerialNumber` | `Future<String?>` | ❌ privacy |
+| `phoneNumber` | `Future<String?>` | ❌ privacy |
+| `simState` | `Future<SimState>` | ✅ |
+| `networkOperatorName` | `Future<String?>` | ✅ |
+| `networkCountryCode` | `Future<String?>` | ✅ |
+| `networkType` | `Future<String?>` | ✅ |
+| `isRoaming` | `Future<bool>` | ❌ |
+| `hasSimCard` | `Future<bool>` | ✅ |
+| `simCount` | `Future<int>` | ✅ |
+| `isDualSim` | `Future<bool>` | ✅ |
+| `isEsim` | `Future<bool>` | ✅ heuristic |
+| `supportsEsim` | `Future<bool>` | ✅ entitlement |
+| `deviceId` | `Future<String?>` | ❌ privacy |
+| `allSimInfo` | `Future<List<SimCardInfo>>` | ✅ |
+| `basicSimInfo` | `Future<SimCardInfo?>` | ✅ |
+| `networkInfo` | `Future<NetworkInfo>` | ✅ |
+| `simInfoForSubscription(int)` | `Future<SimCardInfo?>` | ❌ use `allSimInfo` |
+| `networkGeneration` | `Future<NetworkGeneration>` | ✅ |
+| `onChanged` | `Stream<SimCardChangeEvent>` | ✅ |
+| `throwOnError` | `bool` (default `false`) | — |
+| `clearCache()` | `void` | — |
 
-// If the device supports eSIM or not (entitlement is required on IOS).
-try {
-  final supportsEsim = await SimCardManager.supportsEsim;
-  print('Supports ESIM: $supportsEsim');
-} catch (e) {
-  print('Error checking eSIM compatability: $e');
-}
-```
+> iOS cannot expose phone number, ICCID, IMEI/MEID or roaming status — those
+> methods return an error there and surface as `null`.
 
-### eSIM Integration Guidelines for iOS
+### eSIM on iOS
 
-#### Compatibility Check:
+`SimCardManager.supportsEsim` requires the `com.apple.developer.esim-access`
+entitlement. Without it the check **always returns `false`**, even on
+eSIM-capable devices.
 
-You can check if eSIM functionality is supported by a device in your iOS app by following the steps below. Please note that the process involves requesting entitlement approval from Apple.
-https://developer.apple.com//contact/request/esim-access-entitlement
-
-#### Steps:
-
-##### Step 1: Request eSIM Entitlement
-
-Using your developer account, submit a request for the eSIM entitlement through the Apple Developer portal.
-
-##### Step 2: Approval Process
-
-Apple will review and approve the entitlement request. You can check the status of the approval in your app's profile settings.
-
-##### Step 3: Download Profiles
-
-Download the App Development and Distribution profiles. Ensure that the eSIM entitlement is selected as part of Step #2 in the profile settings.
-
-##### Step 4: Update Info.plist
-
-Update your Info.plist file with the following keys and values:
+1. Request the [eSIM access entitlement](https://developer.apple.com/contact/request/esim-access-entitlement)
+   from Apple with your developer account.
+2. Wait for Apple's approval.
+3. Re-download the Development & Distribution provisioning profiles with the
+   entitlement enabled.
+4. Add the carrier descriptors to your `Info.plist`:
 
 ```xml
 <key>CarrierDescriptors</key>
 <array>
   <dict>
-    <key>GID1</key>
-    <string>***</string>
-    <key>GID2</key>
-    <string>***</string>
-    <key>MCC</key> <!-- Country Code -->
-    <string>***</string>
-    <key>MNC</key> <!-- Network Code -->
-    <string>***</string>
+    <key>GID1</key><string>***</string>
+    <key>GID2</key><string>***</string>
+    <key>MCC</key><string>***</string> <!-- Country Code -->
+    <key>MNC</key><string>***</string> <!-- Network Code -->
   </dict>
 </array>
 ```
 
-## 📊 SIM States
+## 📊 SIM states
 
-The plugin returns the following SIM states:
+`SimState` enum values: `ready`, `absent`, `pinRequired`, `pukRequired`,
+`networkLocked`, `notReady`, `permDisabled`, `cardIoError`, `cardRestricted`,
+`unknown`.
 
-| State             | Description                      |
-| ----------------- | -------------------------------- |
-| `READY`           | SIM card is ready for use        |
-| `ABSENT`          | No SIM card detected             |
-| `PIN_REQUIRED`    | SIM card requires PIN entry      |
-| `PUK_REQUIRED`    | SIM card requires PUK entry      |
-| `NETWORK_LOCKED`  | SIM card is network locked       |
-| `NOT_READY`       | SIM card is not ready            |
-| `PERM_DISABLED`   | SIM card is permanently disabled |
-| `CARD_IO_ERROR`   | SIM card I/O error               |
-| `CARD_RESTRICTED` | SIM card is restricted           |
-| `UNKNOWN`         | Unknown SIM state                |
+## 🌐 Network types
 
-## 🌐 Network Types
+`LTE`, `5G`, `HSPAP`, `HSPA`, `HSDPA`, `HSUPA`, `UMTS`, `EDGE`, `GPRS`, `CDMA`,
+`EVDO_0`, `EVDO_A`, `EVDO_B`, `1xRTT`, `EHRPD`, `UNKNOWN`.
 
-The plugin identifies the following network types:
+## ⚠️ Error handling
 
-| Type      | Description                                  |
-| --------- | -------------------------------------------- |
-| `LTE`     | 4G LTE network                               |
-| `HSPA`    | High Speed Packet Access                     |
-| `HSDPA`   | High Speed Downlink Packet Access            |
-| `HSUPA`   | High Speed Uplink Packet Access              |
-| `HSPAP`   | Evolved High Speed Packet Access             |
-| `UMTS`    | Universal Mobile Telecommunications System   |
-| `EDGE`    | Enhanced Data rates for GSM Evolution        |
-| `GPRS`    | General Packet Radio Service                 |
-| `CDMA`    | Code Division Multiple Access                |
-| `EVDO_0`  | Evolution-Data Optimized Rev 0               |
-| `EVDO_A`  | Evolution-Data Optimized Rev A               |
-| `1xRTT`   | Single Carrier Radio Transmission Technology |
-| `EHRPD`   | Evolved High Rate Packet Data                |
-| `UNKNOWN` | Unknown network type                         |
+Every method returns `null` (or a sensible default) instead of throwing — the
+plugin swallows platform exceptions internally. A `null` result means one of:
 
-## ⚠️ Error Handling
+- no SIM card is present,
+- the platform doesn't support the requested value,
+- the required permission was not granted,
+- an unexpected platform error occurred.
 
-The plugin may return `null` in the following cases:
+Native error codes you may see in logs: `PERMISSION_DENIED`, `SIM_*_ERROR`,
+`NETWORK_*_ERROR`, `NOT_AVAILABLE_ON_IOS`.
 
-- No SIM card is detected
-- The device doesn't support the requested functionality
-- Required permissions are not granted
-- Any other error occurs during execution
+### Typed errors (opt-in)
 
-All methods may throw exceptions with specific error codes:
+To distinguish failure modes instead of getting a silent `null`, enable
+`throwOnError`. Methods then throw a `SimCardException` carrying the error code:
 
-| Error Code          | Description                      |
-| ------------------- | -------------------------------- |
-| `PERMISSION_DENIED` | Required permissions not granted |
-| `SIM_*_ERROR`       | Specific SIM-related errors      |
-| `NETWORK_*_ERROR`   | Network-related errors           |
+```dart
+SimCardManager.throwOnError = true;
 
-Always wrap your calls in try-catch blocks to handle exceptions gracefully.
+try {
+  final number = await SimCardManager.phoneNumber;
+} on SimCardException catch (e) {
+  if (e.code == 'PERMISSION_DENIED') {
+    // prompt the user for the READ_PHONE_STATE permission
+  }
+}
+```
 
-## 🔒 Privacy Considerations
+`throwOnError` defaults to `false`, so existing code keeps the `null`-on-failure
+behavior.
 
-**⚠️ Important**: This plugin accesses sensitive device and SIM information. Some methods require the `READ_PHONE_STATE` permission and may return personally identifiable information such as:
+## 🔒 Privacy considerations
 
-- Phone numbers
-- Device IMEI/MEID
-- SIM serial numbers
+This plugin can access personally identifiable information — phone numbers,
+IMEI/MEID and SIM serial numbers. Before shipping:
 
-**Compliance Requirements**:
+- Declare data collection in your store privacy labels and privacy policy.
+- Only request what your app actually needs.
+- Comply with GDPR, CCPA and other applicable regulations.
 
-- Ensure you comply with your app store's privacy policies
-- Inform users about data collection in your privacy policy
-- Only collect necessary information for your app's functionality
-- Follow GDPR, CCPA, and other applicable data protection regulations
+The plugin includes an iOS `PrivacyInfo.xcprivacy` manifest.
 
 ## 💖 Support
 
-If you find this plugin helpful, consider supporting the development:
+If this plugin helps you, consider supporting development:
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/guidelines/download-assets-sm-1.svg)](https://buymeacoffee.com/is10vmust)
 
 ## 📞 Contact
 
-For bugs or feature requests, please create an issue on the [GitHub repository](https://github.com/mustafa-707/sim_card_code).
+Bugs and feature requests → [GitHub issues](https://github.com/mustafa-707/sim_card_code/issues).
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE).
